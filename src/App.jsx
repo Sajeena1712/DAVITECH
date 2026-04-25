@@ -1,5 +1,4 @@
-﻿import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 const STORAGE_KEY = "daivai-chats-v1";
@@ -713,16 +712,7 @@ function App() {
   );
 }
 
-const root = document.getElementById("root");
-
-if (root) {
-  root.innerHTML = '<div style="padding:24px;color:#172033;font-family:Segoe UI, Arial, sans-serif;">Loading DaivAI...</div>';
-  createRoot(root).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
-}
-
 export default App;
+
+
 
