@@ -1,8 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
+import React from "react";
 import "./App.css";
-import ChatWindow from "./components/ChatWindow.jsx";
-import Header from "./components/Header.jsx";
-import Sidebar from "./components/Sidebar.jsx";
 
 const STORAGE_KEY = "daivai-chats-v1";
 
@@ -155,7 +153,6 @@ function App() {
   );
 
   useEffect(() => {
-    // Persist chats locally so the history survives refreshes.
     if (typeof localStorage === "undefined") return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
   }, [chats]);
@@ -232,7 +229,6 @@ function App() {
     setInputValue("");
     setIsLoading(true);
 
-    // Keep the typing state visible briefly before swapping in the simulated reply.
     timerRef.current = window.setTimeout(() => {
       const reply = buildAssistantReply(text, selectedChat.engine);
       const replyTime = now();
@@ -356,63 +352,328 @@ function App() {
         </div>
       ) : (
         <div className="app-shell">
-          <Sidebar
-            chats={chats}
-            drawerOpen={drawerOpen}
-            formatDate={formatDate}
-            onCreateChat={createNewChat}
-            onDeleteChat={setDeleteChatId}
-            onRenameChat={(chat) => setRenameChat({ id: chat.id, value: chat.title })}
-            onSelectChat={setSelectedChatId}
-            onToggleDrawer={() => setDrawerOpen((value) => !value)}
-            selectedChatId={selectedChatId}
-          />
+          <aside className={`sidebar ${drawerOpen ? "open" : "closed"}`}>
+        <div className="brand">
+          <span className="brand-mark">D</span>
+          <div className="brand-name">DaivAI</div>
+          <button
+            className="drawer-toggle"
+            type="button"
+            aria-label={drawerOpen ? "Close sidebar" : "Open sidebar"}
+            onClick={() => setDrawerOpen((value) => !value)}
+          >
+            ×
+          </button>
+        </div>
+
+        <button className="new-chat-button" onClick={createNewChat} type="button">
+          + New Chat
+        </button>
+
+        <div className="chat-history">
+          <div className="section-title">Chat History</div>
+          <div className="chat-list">
+            {chats.map((chat) => (
+              <div
+                key={chat.id}
+                className={`chat-item ${chat.id === selectedChatId ? "active" : ""}`}
+                onClick={() => setSelectedChatId(chat.id)}
+              >
+                <button type="button" className="chat-select">
+                  <span className="chat-title">{chat.title}</span>
+                  <span className="chat-meta">
+                    {chat.engine} | {formatDate(chat.updatedAt)}
+                  </span>
+                </button>
+                <div className="chat-actions">
+                  <button
+                    type="button"
+                    className="chat-action"
+                    aria-label="Rename chat"
+                    title="Rename chat"
+                    onClick={() => setRenameChat({ id: chat.id, value: chat.title })}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M4 20h4l10.5-10.5a2 2 0 00-4-4L4 16v4z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="chat-action danger"
+                    aria-label="Delete chat"
+                    title="Delete chat"
+                    onClick={() => setDeleteChatId(chat.id)}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M5 7h14M10 7V5.8A.8.8 0 0110.8 5h2.4a.8.8 0 01.8.8V7m-7 0l.6 11a1 1 0 001 .9h5.8a1 1 0 001-.9L15 7"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="sidebar-footer">
+          <div className="user-chip">
+            <span className="user-avatar">U</span>
+            <div className="user-info">
+              <strong>User</strong>
+              <span>user@daivai.com</span>
+            </div>
+          </div>
+          <button type="button" className="footer-menu" aria-label="Account menu">
+            ⋯
+          </button>
+        </div>
+          </aside>
 
           <main className="chat-panel">
-            <Header
-              drawerOpen={drawerOpen}
-              engineOptions={ENGINE_OPTIONS}
-              onSelectEngine={(event) => {
-                if (!selectedChat) return;
-                updateChat(selectedChat.id, (chat) => ({
-                  ...chat,
-                  engine: event.target.value,
-                  updatedAt: now(),
-                }));
-              }}
-              onToggleDrawer={() => setDrawerOpen((value) => !value)}
-              selectedEngine={selectedChat?.engine || ENGINE_OPTIONS[0]}
-            />
+            <header className="chat-header">
+              <button
+                className="drawer-toggle chat-toggle"
+                type="button"
+                aria-label={drawerOpen ? "Close sidebar" : "Open sidebar"}
+                onClick={() => setDrawerOpen((value) => !value)}
+              >
+                ☰
+              </button>
 
-            <ChatWindow
-              bottomRef={bottomRef}
-              copiedMessageId={copiedMessageId}
-              formatTime={formatTime}
-              inputValue={inputValue}
-              isLoading={isLoading}
-              messages={messages}
-              onComposerSubmit={sendMessage}
-              onCopyMessage={copyMessage}
-              onDeleteMessage={(message) =>
-                setDeleteMessageTarget({
-                  chatId: selectedChat.id,
-                  messageId: message.id,
-                })
-              }
-              onEditMessage={(message) =>
-                setEditMessage({
-                  chatId: selectedChat.id,
-                  messageId: message.id,
-                  value: message.content,
-                })
-              }
-              onInputChange={setInputValue}
-              onSend={sendMessage}
-              onStarterClick={setInputValue}
-              selectedChat={selectedChat}
-              showLanding={showLanding}
-              starterCards={starterCards}
-            />
+              <label className="engine-picker">
+                <select
+                  value={selectedChat?.engine || ENGINE_OPTIONS[0]}
+                  onChange={(event) => {
+                    if (!selectedChat) return;
+                    updateChat(selectedChat.id, (chat) => ({
+                      ...chat,
+                      engine: event.target.value,
+                      updatedAt: now(),
+                    }));
+                  }}
+                >
+                  {ENGINE_OPTIONS.map((engine) => (
+                    <option key={engine} value={engine}>
+                      {engine}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </header>
+
+            <section className={`conversation ${showLanding ? "landing" : "chatting"}`}>
+              {showLanding ? (
+                <div className="landing-card">
+                  <div className="landing-badge">DaivAI</div>
+                  <h2>Welcome to DaivAI</h2>
+                  <p>Start a prompt, switch the engine, or pick one of the sample ideas below.</p>
+                  <div className="starter-grid">
+                    {starterCards.map((item) => (
+                      <button key={item} type="button" className="starter-card" onClick={() => setInputValue(item)}>
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {messages.length === 0 && (
+                    <div className="empty-state">
+                      <h3>No messages yet</h3>
+                      <p>Start a new message below to begin this chat.</p>
+                    </div>
+                  )}
+
+                  {messages.map((message) => (
+                    <div key={message.id} className={`message-row ${message.role}`}>
+                      <div className={`message-avatar ${message.role}`}>
+                        {message.role === "user" ? "U" : "AI"}
+                      </div>
+                      <div className={`message-bubble ${message.role}`}>
+                        <div className="message-head">
+                          <span className="message-name">
+                            {message.role === "user" ? "You" : selectedChat?.engine || "Assistant"}
+                          </span>
+                          <span className="message-time">{formatTime(message.updatedAt || message.createdAt)}</span>
+                        </div>
+                        <div className="message-text">{message.content}</div>
+                      </div>
+                      {message.role === "user" && (
+                        <div className="message-hover-actions">
+                          <button
+                            type="button"
+                            className="message-action"
+                            title="Copy message"
+                            aria-label="Copy message"
+                            onClick={() => copyMessage(message.content, message.id)}
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path
+                                d="M9 9h8v12H5V5h4m2 0h8v4m-8 0L21 1"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            className="message-action"
+                            title="Edit message"
+                            aria-label="Edit message"
+                            onClick={() =>
+                              setEditMessage({
+                                chatId: selectedChat.id,
+                                messageId: message.id,
+                                value: message.content,
+                              })
+                            }
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path
+                                d="M4 20h4l10.5-10.5a2 2 0 00-4-4L4 16v4z"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            className="message-action danger"
+                            title="Delete message"
+                            aria-label="Delete message"
+                            onClick={() =>
+                              setDeleteMessageTarget({
+                                chatId: selectedChat.id,
+                                messageId: message.id,
+                              })
+                            }
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path
+                                d="M5 7h14M10 7V5.8A.8.8 0 0110.8 5h2.4a.8.8 0 01.8.8V7m-7 0l.6 11a1 1 0 001 .9h5.8a1 1 0 001-.9L15 7"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                          {copiedMessageId === message.id && <span className="copy-toast">Copied</span>}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {isLoading && (
+                    <div className="typing">
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                  )}
+
+                  <div ref={bottomRef} />
+                </>
+              )}
+            </section>
+
+            <footer className="composer">
+              <form
+                className="composer-shell"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  sendMessage();
+                }}
+              >
+                <button type="button" className="composer-icon" aria-label="Attach file">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M8.5 12.5l5.8-5.8a2.8 2.8 0 114 4l-7.7 7.7a4.2 4.2 0 11-5.9-5.9l7.6-7.6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <textarea
+                  className="composer-input"
+                  value={inputValue}
+                  onChange={(event) => setInputValue(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  placeholder="Message Neural Nexus..."
+                  rows={2}
+                />
+                <div className="composer-tools">
+                  <button type="button" className="composer-icon" aria-label="Voice input">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M12 15.5a3.5 3.5 0 003.5-3.5V8a3.5 3.5 0 10-7 0v4a3.5 3.5 0 003.5 3.5z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M6.5 11.5v.5a5.5 5.5 0 0011 0v-.5M12 17v3M9 20h6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="submit"
+                    className="composer-send"
+                    disabled={isLoading}
+                    aria-label="Send message"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M4 12l15-7-4 15-3.5-6.5L4 12z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </form>
+              <div className="composer-footer">
+                <span>Press Enter to send, Shift+Enter for a new line</span>
+                <span>{inputValue.length} / 4000</span>
+              </div>
+            </footer>
           </main>
 
           {renameChat && (
@@ -498,7 +759,6 @@ function App() {
 }
 
 export default App;
-
 
 
 
