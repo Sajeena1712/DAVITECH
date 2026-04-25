@@ -4,6 +4,7 @@ import "./App.css";
 const STORAGE_KEY = "daivai-chats-v1";
 const THEME_KEY = "daivai-theme-v1";
 const AUTH_KEY = "daivai-auth-v1";
+const USERS_KEY = "daivai-users-v1";
 
 const ENGINE_OPTIONS = [
   "Neural Nexus",
@@ -145,6 +146,42 @@ function getChatsStorageKey(email) {
   return normalizedEmail ? `${STORAGE_KEY}:${normalizedEmail}` : STORAGE_KEY;
 }
 
+function normalizeEmail(email) {
+  return typeof email === "string" ? email.trim().toLowerCase() : "";
+}
+
+function normalizeUser(user) {
+  if (!user || typeof user !== "object") {
+    return null;
+  }
+
+  const email = normalizeEmail(user.email);
+  const name = typeof user.name === "string" ? user.name.trim() : "";
+  const password = typeof user.password === "string" ? user.password : "";
+
+  if (!email || !name || !password) {
+    return null;
+  }
+
+  return { name, email, password };
+}
+
+function getSavedUsers() {
+  if (typeof localStorage === "undefined") {
+    return [];
+  }
+
+  try {
+    const raw = localStorage.getItem(USERS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(normalizeUser).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 function getSavedSession() {
   if (typeof localStorage === "undefined") {
     return null;
@@ -154,12 +191,24 @@ function getSavedSession() {
     const raw = localStorage.getItem(AUTH_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    const email = typeof parsed?.email === "string" ? parsed.email.trim() : "";
+    const email = normalizeEmail(parsed?.email);
+    const name = typeof parsed?.name === "string" ? parsed.name.trim() : "";
     if (!email) return null;
-    return { email };
+    return { email, name };
   } catch {
     return null;
   }
+}
+
+function isStrongPassword(password) {
+  return (
+    typeof password === "string" &&
+    password.length >= 8 &&
+    /[a-z]/.test(password) &&
+    /[A-Z]/.test(password) &&
+    /\d/.test(password) &&
+    /[^A-Za-z0-9]/.test(password)
+  );
 }
 
 async function requestAssistantReply({ prompt, engine, history }) {
@@ -258,12 +307,21 @@ async function requestAssistantReply({ prompt, engine, history }) {
 }
 
 function App() {
-  const [authUser, setAuthUser] = useState(() => getSavedSession());
-  const [loginEmail, setLoginEmail] = useState(() => getSavedSession()?.email ?? "");
-  const [loginPassword, setLoginPassword] = useState("");
+  const [users, setUsers] = useState(() => getSavedUsers());
+  const [authUser, setAuthUser] = useState(() => {
+    const session = getSavedSession();
+    if (!session) return null;
+    const savedUser = getSavedUsers().find((user) => user.email === session.email);
+    return savedUser ? { name: savedUser.name, email: savedUser.email } : session;
+  });
+  const [authMode, setAuthMode] = useState("signin");
+  const [authName, setAuthName] = useState("");
+  const [authEmail, setAuthEmail] = useState(() => getSavedSession()?.email ?? "");
+  const [authPassword, setAuthPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [authNotice, setAuthNotice] = useState("");
   const [initialChats] = useState(() => getSavedChats(getSavedSession()?.email));
   const [chats, setChats] = useState(() => initialChats);
   const [selectedChatId, setSelectedChatId] = useState(() => initialChats[0]?.id ?? "");
@@ -290,6 +348,8 @@ function App() {
     [authUser?.email],
   );
 
+  const userDisplayName = authUser?.name || authUser?.email || "User";
+
   useEffect(() => {
     // Persist chats locally so the history survives refreshes.
     if (typeof localStorage === "undefined") return;
@@ -303,6 +363,11 @@ function App() {
       localStorage.setItem(THEME_KEY, theme);
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (typeof localStorage === "undefined") return;
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }, [users]);
 
   useEffect(() => {
     if (!selectedChatId && chats[0]) {
@@ -324,8 +389,10 @@ function App() {
       const nextChats = getSavedChats(authUser.email);
       setChats(nextChats);
       setSelectedChatId(nextChats[0]?.id ?? "");
-      setLoginEmail(authUser.email);
+      setAuthEmail(authUser.email);
       setAuthError("");
+      setAuthNotice("");
+      setAuthMode("signin");
     }
   }, [authUser?.email]);
 
@@ -351,28 +418,106 @@ function App() {
     setChats((current) => current.map((chat) => (chat.id === chatId ? updater(chat) : chat)));
   }
 
-  function handleLogin(event) {
+  function clearAuthFeedback() {
+    setAuthError("");
+    setAuthNotice("");
+  }
+
+  function handleAuthSubmit(event) {
     event.preventDefault();
-    const email = loginEmail.trim().toLowerCase();
-    const password = loginPassword.trim();
+    const email = normalizeEmail(authEmail);
+    const password = authPassword;
+
+    if (authMode === "signup") {
+      const name = authName.trim();
+      if (!name) {
+        setAuthError("Enter your name.");
+        return;
+      }
+      if (!email || !email.includes("@")) {
+        setAuthError("Enter a valid email address.");
+        return;
+      }
+      if (!isStrongPassword(password)) {
+        setAuthError("Password must be 8+ chars with upper, lower, number, and symbol.");
+        return;
+      }
+      if (users.some((user) => user.email === email)) {
+        setAuthError("An account already exists for this email.");
+        return;
+      }
+
+      const nextUser = { name, email, password };
+      const nextUsers = [nextUser, ...users];
+      setUsers(nextUsers);
+      const nextSession = { name, email };
+      setAuthUser(nextSession);
+      setChats(getSavedChats(email));
+      setSelectedChatId(getSavedChats(email)[0]?.id ?? "");
+      setAuthPassword("");
+      setAuthNotice("Account created. You are signed in now.");
+      setAuthError("");
+      setDrawerOpen(true);
+      if (typeof localStorage !== "undefined") {
+        if (rememberMe) {
+          localStorage.setItem(AUTH_KEY, JSON.stringify(nextSession));
+        } else {
+          localStorage.removeItem(AUTH_KEY);
+        }
+      }
+      return;
+    }
+
+    if (authMode === "forgot") {
+      if (!email || !email.includes("@")) {
+        setAuthError("Enter a valid email address.");
+        return;
+      }
+      if (!isStrongPassword(password)) {
+        setAuthError("New password must be 8+ chars with upper, lower, number, and symbol.");
+        return;
+      }
+
+      const existing = users.find((user) => user.email === email);
+      if (!existing) {
+        setAuthError("No account found for that email.");
+        return;
+      }
+
+      const updatedUsers = users.map((user) => (user.email === email ? { ...user, password } : user));
+      setUsers(updatedUsers);
+      setAuthMode("signin");
+      setAuthPassword("");
+      setShowPassword(false);
+      setAuthError("");
+      setAuthNotice("Password updated. Please sign in again.");
+      return;
+    }
 
     if (!email || !email.includes("@")) {
       setAuthError("Enter a valid email address.");
       return;
     }
 
-    if (password.length < 4) {
-      setAuthError("Password should be at least 4 characters.");
+    if (!password) {
+      setAuthError("Enter your password.");
       return;
     }
 
-    const nextSession = { email };
+    const matchedUser = users.find((user) => user.email === email);
+    if (!matchedUser || matchedUser.password !== password) {
+      setAuthError("Email or password is incorrect.");
+      return;
+    }
+
+    const nextSession = { name: matchedUser.name, email: matchedUser.email };
     const nextChats = getSavedChats(email);
     setAuthUser(nextSession);
     setChats(nextChats);
     setSelectedChatId(nextChats[0]?.id ?? "");
-    setLoginPassword("");
+    setAuthPassword("");
     setAuthError("");
+    setAuthNotice("");
     setDrawerOpen(true);
 
     if (typeof localStorage !== "undefined") {
@@ -386,8 +531,12 @@ function App() {
 
   function handleLogout() {
     setAuthUser(null);
-    setLoginPassword("");
+    setAuthName("");
+    setAuthEmail("");
+    setAuthPassword("");
     setAuthError("");
+    setAuthNotice("");
+    setAuthMode("signin");
     setSelectedChatId("");
     setChats([createChat()]);
     setInputValue("");
@@ -397,6 +546,21 @@ function App() {
     setDeleteMessageTarget(null);
     if (typeof localStorage !== "undefined") {
       localStorage.removeItem(AUTH_KEY);
+    }
+  }
+
+  function switchAuthMode(mode) {
+    setAuthMode(mode);
+    setAuthError("");
+    setAuthNotice("");
+    setAuthPassword("");
+    setShowPassword(false);
+    if (mode !== "signup") {
+      setAuthName("");
+    }
+    if (mode === "signin" && authUser?.email) {
+      setAuthEmail(authUser.email);
+      setAuthName(authUser.name || "");
     }
   }
 
@@ -575,30 +739,73 @@ function App() {
               <div className="auth-brand">
                 <div>
                   <h1>DaivAI</h1>
-                  <p>Sign in to continue to your chat workspace.</p>
+                  <p>
+                    {authMode === "signup"
+                      ? "Create your account to start chatting."
+                      : authMode === "forgot"
+                        ? "Reset your password and return to chat."
+                        : "Sign in to continue to your chat workspace."}
+                  </p>
                 </div>
               </div>
 
-              <form className="auth-form" onSubmit={handleLogin}>
+              <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
+                <button
+                  type="button"
+                  className={`auth-tab ${authMode === "signin" ? "active" : ""}`}
+                  onClick={() => switchAuthMode("signin")}
+                >
+                  Sign in
+                </button>
+                <button
+                  type="button"
+                  className={`auth-tab ${authMode === "signup" ? "active" : ""}`}
+                  onClick={() => switchAuthMode("signup")}
+                >
+                  Sign up
+                </button>
+                <button
+                  type="button"
+                  className={`auth-tab ${authMode === "forgot" ? "active" : ""}`}
+                  onClick={() => switchAuthMode("forgot")}
+                >
+                  Forgot password
+                </button>
+              </div>
+
+              <form className="auth-form" onSubmit={handleAuthSubmit}>
+                {authMode === "signup" && (
+                  <label className="auth-field">
+                    <span>Name</span>
+                    <input
+                      type="text"
+                      value={authName}
+                      onChange={(event) => setAuthName(event.target.value)}
+                      placeholder="Your full name"
+                      autoComplete="name"
+                    />
+                  </label>
+                )}
+
                 <label className="auth-field">
                   <span>Email</span>
                   <input
                     type="email"
-                    value={loginEmail}
-                    onChange={(event) => setLoginEmail(event.target.value)}
+                    value={authEmail}
+                    onChange={(event) => setAuthEmail(event.target.value)}
                     placeholder="you@example.com"
                     autoComplete="email"
                   />
                 </label>
 
                 <label className="auth-field">
-                  <span>Password</span>
+                  <span>{authMode === "forgot" ? "New password" : "Password"}</span>
                   <div className="auth-password-row">
                     <input
                       type={showPassword ? "text" : "password"}
-                      value={loginPassword}
-                      onChange={(event) => setLoginPassword(event.target.value)}
-                      placeholder="Enter your password"
+                      value={authPassword}
+                      onChange={(event) => setAuthPassword(event.target.value)}
+                      placeholder={authMode === "forgot" ? "Enter a new password" : "Enter your password"}
                       autoComplete="current-password"
                     />
                     <button
@@ -611,21 +818,46 @@ function App() {
                   </div>
                 </label>
 
-                <label className="auth-remember">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(event) => setRememberMe(event.target.checked)}
-                  />
-                  <span>Remember me on this device</span>
-                </label>
+                {authMode !== "forgot" && (
+                  <label className="auth-remember">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(event) => setRememberMe(event.target.checked)}
+                    />
+                    <span>Remember me on this device</span>
+                  </label>
+                )}
 
+                {authNotice && <div className="auth-notice">{authNotice}</div>}
                 {authError && <div className="auth-error">{authError}</div>}
 
                 <button type="submit" className="auth-submit">
-                  Sign in
+                  {authMode === "signup" ? "Create account" : authMode === "forgot" ? "Update password" : "Sign in"}
                 </button>
-                <div className="auth-note">Use any valid email and a password with at least 4 characters.</div>
+                <div className="auth-links">
+                  {authMode === "signin" ? (
+                    <>
+                      <button type="button" onClick={() => switchAuthMode("forgot")}>
+                        Forgot password?
+                      </button>
+                      <button type="button" onClick={() => switchAuthMode("signup")}>
+                        Need an account?
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" onClick={() => switchAuthMode("signin")}>
+                      Back to sign in
+                    </button>
+                  )}
+                </div>
+                <div className="auth-note">
+                  {authMode === "signup"
+                    ? "Password must be 8+ characters and include upper, lower, number, and symbol."
+                    : authMode === "forgot"
+                      ? "Enter your email and choose a new strong password."
+                      : "Use your registered email and password to sign in."}
+                </div>
               </form>
             </div>
           </div>
@@ -736,15 +968,15 @@ function App() {
           <div className="user-chip">
             <span className="user-avatar">U</span>
             <div className="user-info">
-              <strong>{authUser.email}</strong>
-              <span>Signed in</span>
+              <strong>{userDisplayName}</strong>
+              <span>{authUser.email}</span>
             </div>
           </div>
           <button type="button" className="footer-menu logout-button" aria-label="Log out" onClick={handleLogout}>
-            <span aria-hidden="true">⎋</span>
+            <span aria-hidden="true">Logout</span>
           </button>
-                    <button type="button" className="footer-menu" aria-label="Account menu">
-            <span aria-hidden="true">☰</span>
+          <button type="button" className="footer-menu" aria-label="Account menu">
+            <span aria-hidden="true">Menu</span>
           </button>
         </div>
           </aside>
