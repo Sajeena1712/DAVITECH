@@ -214,6 +214,31 @@ function isStrongPassword(password) {
 
 async function requestAssistantReply({ prompt, engine, history }) {
   const browserApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const isLocalHost =
+    typeof window !== "undefined" &&
+    /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(window.location.hostname);
+
+  if (!isLocalHost) {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt, engine, history }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data?.error || `Gemini request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const reply = typeof data.reply === "string" ? data.reply.trim() : "";
+    if (!reply) {
+      throw new Error("Gemini returned an empty response.");
+    }
+    return reply;
+  }
 
   if (browserApiKey) {
     try {
@@ -271,40 +296,18 @@ async function requestAssistantReply({ prompt, engine, history }) {
 
       if (response.ok) {
         const data = await response.json();
-        const reply =
-          data?.candidates?.[0]?.content?.parts?.map((part) => part?.text || "").join("").trim() || "";
+        const reply = data?.candidates?.[0]?.content?.parts?.map((part) => part?.text || "").join("").trim() || "";
 
         if (reply) {
           return reply;
         }
       }
     } catch {
-      // Fall through to the server route or local simulator.
+      // Fall through to the server route or an explicit error.
     }
   }
 
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt, engine, history }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    if (typeof data.reply === "string" && data.reply.trim()) {
-      return data.reply.trim();
-    }
-  } catch {
-    // Fall back to the local simulator when the API is unavailable.
-  }
-
-  return buildAssistantReply(prompt, engine);
+  throw new Error("Gemini is not configured for this environment.");
 }
 
 async function requestMongoAuth(payload) {
@@ -664,24 +667,40 @@ function App() {
     setInputValue("");
     setIsLoading(true);
 
-    // Use Gemini in production, but fall back to the local simulator in dev or when offline.
-    const reply = await requestAssistantReply({
-      prompt: text,
-      engine: selectedChat.engine,
-      history: [...selectedChat.messages, userMessage].slice(-12),
-    });
+    try {
+      // Ask Gemini through the backend in production, and through the browser key only on localhost.
+      const reply = await requestAssistantReply({
+        prompt: text,
+        engine: selectedChat.engine,
+        history: [...selectedChat.messages, userMessage].slice(-12),
+      });
 
-    const replyTime = now();
-    updateChat(selectedChat.id, (chat) => ({
-      ...chat,
-      messages: chat.messages.map((message) =>
-        message.id === loadingMessage.id
-          ? { ...message, content: reply, createdAt: replyTime }
-          : message,
-      ),
-      updatedAt: replyTime,
-    }));
-    setIsLoading(false);
+      const replyTime = now();
+      updateChat(selectedChat.id, (chat) => ({
+        ...chat,
+        messages: chat.messages.map((message) =>
+          message.id === loadingMessage.id
+            ? { ...message, content: reply, createdAt: replyTime }
+            : message,
+        ),
+        updatedAt: replyTime,
+      }));
+    } catch (error) {
+      const failureReply =
+        error instanceof Error ? error.message : "Gemini API is unavailable right now.";
+      const replyTime = now();
+      updateChat(selectedChat.id, (chat) => ({
+        ...chat,
+        messages: chat.messages.map((message) =>
+          message.id === loadingMessage.id
+            ? { ...message, content: failureReply, createdAt: replyTime }
+            : message,
+        ),
+        updatedAt: replyTime,
+      }));
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function renameSelectedChat() {
