@@ -5,6 +5,7 @@ const STORAGE_KEY = "daivai-chats-v1";
 const THEME_KEY = "daivai-theme-v1";
 const AUTH_KEY = "daivai-auth-v1";
 const USERS_KEY = "daivai-users-v1";
+const MONGO_AUTH_ENABLED = import.meta.env.VITE_MONGO_AUTH_ENABLED === "true";
 
 const ENGINE_OPTIONS = [
   "Neural Nexus",
@@ -306,6 +307,23 @@ async function requestAssistantReply({ prompt, engine, history }) {
   return buildAssistantReply(prompt, engine);
 }
 
+async function requestMongoAuth(payload) {
+  const response = await fetch("/api/auth", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data?.error || "Authentication request failed.");
+  }
+
+  return data;
+}
+
 function App() {
   const [users, setUsers] = useState(() => getSavedUsers());
   const [authUser, setAuthUser] = useState(() => {
@@ -423,10 +441,29 @@ function App() {
     setAuthNotice("");
   }
 
-  function handleAuthSubmit(event) {
+  async function handleAuthSubmit(event) {
     event.preventDefault();
     const email = normalizeEmail(authEmail);
     const password = authPassword;
+
+    function completeAuthSession(nextSession, notice = "") {
+      const nextChats = getSavedChats(nextSession.email);
+      setAuthUser(nextSession);
+      setChats(nextChats);
+      setSelectedChatId(nextChats[0]?.id ?? "");
+      setAuthPassword("");
+      setAuthError("");
+      setAuthNotice(notice);
+      setDrawerOpen(true);
+
+      if (typeof localStorage !== "undefined") {
+        if (rememberMe) {
+          localStorage.setItem(AUTH_KEY, JSON.stringify(nextSession));
+        } else {
+          localStorage.removeItem(AUTH_KEY);
+        }
+      }
+    }
 
     if (authMode === "signup") {
       const name = authName.trim();
@@ -442,29 +479,32 @@ function App() {
         setAuthError("Password must be 8+ chars with upper, lower, number, and symbol.");
         return;
       }
+
+      if (MONGO_AUTH_ENABLED) {
+        try {
+          const data = await requestMongoAuth({ mode: "signup", name, email, password });
+          if (data?.user) {
+            setUsers((current) => [
+              { name, email, password },
+              ...current.filter((user) => user.email !== email),
+            ]);
+            completeAuthSession(data.user, "Account created. You are signed in now.");
+            return;
+          }
+        } catch (error) {
+          setAuthError(error.message || "Unable to create account.");
+          return;
+        }
+      }
+
       if (users.some((user) => user.email === email)) {
         setAuthError("An account already exists for this email.");
         return;
       }
 
       const nextUser = { name, email, password };
-      const nextUsers = [nextUser, ...users];
-      setUsers(nextUsers);
-      const nextSession = { name, email };
-      setAuthUser(nextSession);
-      setChats(getSavedChats(email));
-      setSelectedChatId(getSavedChats(email)[0]?.id ?? "");
-      setAuthPassword("");
-      setAuthNotice("Account created. You are signed in now.");
-      setAuthError("");
-      setDrawerOpen(true);
-      if (typeof localStorage !== "undefined") {
-        if (rememberMe) {
-          localStorage.setItem(AUTH_KEY, JSON.stringify(nextSession));
-        } else {
-          localStorage.removeItem(AUTH_KEY);
-        }
-      }
+      setUsers((current) => [nextUser, ...current.filter((user) => user.email !== email)]);
+      completeAuthSession({ name, email }, "Account created. You are signed in now.");
       return;
     }
 
@@ -476,6 +516,26 @@ function App() {
       if (!isStrongPassword(password)) {
         setAuthError("New password must be 8+ chars with upper, lower, number, and symbol.");
         return;
+      }
+
+      if (MONGO_AUTH_ENABLED) {
+        try {
+          const data = await requestMongoAuth({ mode: "forgot", email, password });
+          if (data?.user) {
+            setUsers((current) =>
+              current.map((user) => (user.email === email ? { ...user, password } : user)),
+            );
+            setAuthMode("signin");
+            setAuthPassword("");
+            setShowPassword(false);
+            setAuthError("");
+            setAuthNotice("Password updated. Please sign in again.");
+            return;
+          }
+        } catch (error) {
+          setAuthError(error.message || "Unable to update password.");
+          return;
+        }
       }
 
       const existing = users.find((user) => user.email === email);
@@ -504,29 +564,26 @@ function App() {
       return;
     }
 
+    if (MONGO_AUTH_ENABLED) {
+      try {
+        const data = await requestMongoAuth({ mode: "signin", email, password });
+        if (data?.user) {
+          completeAuthSession(data.user);
+          return;
+        }
+      } catch (error) {
+        setAuthError(error.message || "Unable to sign in.");
+        return;
+      }
+    }
+
     const matchedUser = users.find((user) => user.email === email);
     if (!matchedUser || matchedUser.password !== password) {
       setAuthError("Email or password is incorrect.");
       return;
     }
 
-    const nextSession = { name: matchedUser.name, email: matchedUser.email };
-    const nextChats = getSavedChats(email);
-    setAuthUser(nextSession);
-    setChats(nextChats);
-    setSelectedChatId(nextChats[0]?.id ?? "");
-    setAuthPassword("");
-    setAuthError("");
-    setAuthNotice("");
-    setDrawerOpen(true);
-
-    if (typeof localStorage !== "undefined") {
-      if (rememberMe) {
-        localStorage.setItem(AUTH_KEY, JSON.stringify(nextSession));
-      } else {
-        localStorage.removeItem(AUTH_KEY);
-      }
-    }
+    completeAuthSession({ name: matchedUser.name, email: matchedUser.email });
   }
 
   function handleLogout() {

@@ -16,6 +16,7 @@ DaivAI is a React-based AI chat web application that simulates a ChatGPT-style c
 - Delete user messages through a confirmation dialog
 - Hover actions on user messages
 - Gemini API support through a serverless endpoint
+- Optional MongoDB-backed authentication for sign in, sign up, and password reset
 - Dark mode toggle
 - Responsive layout
 - Clean white theme inspired by the reference design
@@ -29,8 +30,9 @@ DaivAI is a React-based AI chat web application that simulates a ChatGPT-style c
 
 ## Implementation Notes
 
-- The assistant response is simulated locally instead of calling a live API.
+- The assistant response is simulated locally unless the Gemini key is configured.
 - In production, assistant replies are routed through Gemini from the `/api/chat` endpoint.
+- Authentication can use MongoDB through `/api/auth` when `VITE_MONGO_AUTH_ENABLED=true`.
 - Chat state is stored in `localStorage`, so chats persist after refresh.
 - The project uses React functional components and hooks.
 - The production build is generated with Vite.
@@ -52,6 +54,16 @@ npm run dev
 3. Open the local URL shown in the terminal, usually `http://localhost:5173/`
 
 4. Add your Gemini key as `GEMINI_API_KEY` in your deployment environment. For local testing, put it in `.env.local`.
+5. To enable MongoDB auth in production, set:
+
+```bash
+VITE_MONGO_AUTH_ENABLED=true
+MONGODB_APP_ID=your_app_id
+MONGODB_DATA_API_KEY=your_data_api_key
+MONGODB_DATA_SOURCE=Cluster0
+MONGODB_DATABASE=daivai
+MONGODB_USERS_COLLECTION=users
+```
 
 ## Files
 
@@ -59,6 +71,7 @@ npm run dev
 - `src/App.css` - styling
 - `src/main.jsx` - app bootstrap
 - `api/chat.js` - Gemini serverless proxy
+- `api/auth.js` - MongoDB-backed authentication endpoint
 
 ## Submission Summary
 
