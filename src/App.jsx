@@ -51,6 +51,46 @@ function createChat() {
   };
 }
 
+function normalizeMessage(message) {
+  if (!message || typeof message !== "object") {
+    return null;
+  }
+
+  const role = message.role === "assistant" ? "assistant" : "user";
+  const content = typeof message.content === "string" ? message.content : "";
+  const createdAt = typeof message.createdAt === "string" ? message.createdAt : now();
+  const updatedAt = typeof message.updatedAt === "string" ? message.updatedAt : createdAt;
+
+  return {
+    id: typeof message.id === "string" ? message.id : createId(),
+    role,
+    content,
+    createdAt,
+    updatedAt,
+  };
+}
+
+function normalizeChat(chat) {
+  if (!chat || typeof chat !== "object") {
+    return createChat();
+  }
+
+  const normalizedMessages = Array.isArray(chat.messages)
+    ? chat.messages.map(normalizeMessage).filter(Boolean)
+    : [];
+
+  const timestamp = typeof chat.createdAt === "string" ? chat.createdAt : now();
+
+  return {
+    id: typeof chat.id === "string" ? chat.id : createId(),
+    title: typeof chat.title === "string" && chat.title.trim() ? chat.title : "New Chat",
+    engine: ENGINE_OPTIONS.includes(chat.engine) ? chat.engine : ENGINE_OPTIONS[0],
+    createdAt: timestamp,
+    updatedAt: typeof chat.updatedAt === "string" ? chat.updatedAt : timestamp,
+    messages: normalizedMessages.length > 0 ? normalizedMessages : createChat().messages,
+  };
+}
+
 function getChatTitle(text) {
   const trimmed = text.trim();
   if (!trimmed) return "New Chat";
@@ -67,7 +107,7 @@ function getSavedChats() {
     if (!raw) return [createChat()];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) return [createChat()];
-    return parsed;
+    return parsed.map(normalizeChat);
   } catch {
     return [createChat()];
   }
@@ -124,7 +164,7 @@ function App() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [selectedChat?.messages.length, isLoading]);
+  }, [selectedChat?.messages?.length ?? 0, isLoading]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
