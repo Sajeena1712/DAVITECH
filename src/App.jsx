@@ -213,7 +213,10 @@ function isStrongPassword(password) {
 }
 
 async function requestAssistantReply({ prompt, engine, history }) {
-  const localApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const isLocalHost =
+    typeof window !== "undefined" &&
+    /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(window.location.hostname);
+  const localApiKey = isLocalHost ? import.meta.env.VITE_GEMINI_API_KEY : "";
 
   if (localApiKey) {
     try {
@@ -279,7 +282,7 @@ async function requestAssistantReply({ prompt, engine, history }) {
         }
       }
     } catch {
-      // Fall through to the serverless route or local simulator.
+      // Fall through to the server route or local simulator.
     }
   }
 
@@ -325,7 +328,7 @@ async function requestMongoAuth(payload) {
 }
 
 function App() {
-  const [users, setUsers] = useState(() => getSavedUsers());
+  const [users, setUsers] = useState(() => (MONGO_AUTH_ENABLED ? [] : getSavedUsers()));
   const [authUser, setAuthUser] = useState(() => {
     const session = getSavedSession();
     if (!session) return null;
@@ -383,7 +386,7 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
-    if (typeof localStorage === "undefined") return;
+    if (typeof localStorage === "undefined" || MONGO_AUTH_ENABLED) return;
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
   }, [users]);
 

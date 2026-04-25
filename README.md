@@ -33,6 +33,7 @@ DaivAI is a React-based AI chat web application that simulates a ChatGPT-style c
 
 - The assistant response is simulated locally unless the Gemini key is configured.
 - In production, assistant replies are routed through Gemini from the `/api/chat` endpoint.
+- The backend accepts either `GEMINI_API_KEY` or `VITE_GEMINI_API_KEY`, but `GEMINI_API_KEY` is the preferred name for Render.
 - Authentication can use MongoDB through `/api/auth` when `VITE_MONGO_AUTH_ENABLED=true`.
 - Chat state is stored in `localStorage`, so chats persist after refresh.
 - The project uses React functional components and hooks.
@@ -54,7 +55,7 @@ npm run dev
 
 3. Open the local URL shown in the terminal, usually `http://localhost:5173/`
 
-4. Add your Gemini key as `GEMINI_API_KEY` in your deployment environment. For local testing, put it in `.env.local`.
+4. Add your Gemini key as `GEMINI_API_KEY` in your deployment environment. If your host already uses `VITE_GEMINI_API_KEY`, the server also accepts that name. For local testing, put it in `.env.local`.
 5. To enable MongoDB auth in production, set:
 
 ```bash
