@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
+import React from "react";
 import "./App.css";
 
 const STORAGE_KEY = "daivai-chats-v1";
