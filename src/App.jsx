@@ -806,30 +806,6 @@ function App() {
                 </div>
               </div>
 
-              <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
-                <button
-                  type="button"
-                  className={`auth-tab ${authMode === "signin" ? "active" : ""}`}
-                  onClick={() => switchAuthMode("signin")}
-                >
-                  Sign in
-                </button>
-                <button
-                  type="button"
-                  className={`auth-tab ${authMode === "signup" ? "active" : ""}`}
-                  onClick={() => switchAuthMode("signup")}
-                >
-                  Sign up
-                </button>
-                <button
-                  type="button"
-                  className={`auth-tab ${authMode === "forgot" ? "active" : ""}`}
-                  onClick={() => switchAuthMode("forgot")}
-                >
-                  Forgot password
-                </button>
-              </div>
-
               <form className="auth-form" onSubmit={handleAuthSubmit}>
                 {authMode === "signup" && (
                   <label className="auth-field">
@@ -955,7 +931,7 @@ function App() {
             aria-label={drawerOpen ? "Close sidebar" : "Open sidebar"}
             onClick={() => setDrawerOpen((value) => !value)}
           >
-            <span aria-hidden="true">×</span>
+            <span aria-hidden="true">X</span>
           </button>
         </div>
 

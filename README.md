@@ -16,6 +16,7 @@ DaivAI is a React-based AI chat web application that simulates a ChatGPT-style c
 - Delete user messages through a confirmation dialog
 - Hover actions on user messages
 - Gemini API support through a serverless endpoint
+- Separate sign in, sign up, and forgot-password pages
 - Optional MongoDB-backed authentication for sign in, sign up, and password reset
 - Dark mode toggle
 - Responsive layout
