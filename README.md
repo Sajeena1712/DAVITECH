@@ -15,6 +15,8 @@ DaivAI is a React-based AI chat web application that simulates a ChatGPT-style c
 - Edit user messages through a modal
 - Delete user messages through a confirmation dialog
 - Hover actions on user messages
+- Gemini API support through a serverless endpoint
+- Dark mode toggle
 - Responsive layout
 - Clean white theme inspired by the reference design
 
@@ -28,6 +30,7 @@ DaivAI is a React-based AI chat web application that simulates a ChatGPT-style c
 ## Implementation Notes
 
 - The assistant response is simulated locally instead of calling a live API.
+- In production, assistant replies are routed through Gemini from the `/api/chat` endpoint.
 - Chat state is stored in `localStorage`, so chats persist after refresh.
 - The project uses React functional components and hooks.
 - The production build is generated with Vite.
@@ -48,11 +51,14 @@ npm run dev
 
 3. Open the local URL shown in the terminal, usually `http://localhost:5173/`
 
+4. Add your Gemini key as `GEMINI_API_KEY` in your deployment environment. For local testing, put it in `.env.local`.
+
 ## Files
 
 - `src/App.jsx` - main chat logic and UI
 - `src/App.css` - styling
 - `src/main.jsx` - app bootstrap
+- `api/chat.js` - Gemini serverless proxy
 
 ## Submission Summary
 
@@ -63,4 +69,3 @@ This project covers the core assignment flow:
 - Edit and delete messages
 - Rename and delete chats
 - Select between multiple AI engines
-

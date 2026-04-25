@@ -1,8 +1,8 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
-import React from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 const STORAGE_KEY = "daivai-chats-v1";
+const THEME_KEY = "daivai-theme-v1";
 
 const ENGINE_OPTIONS = [
   "Neural Nexus",
@@ -130,6 +130,43 @@ function buildAssistantReply(prompt, engine) {
   ].join("\n");
 }
 
+function getSavedTheme() {
+  if (typeof localStorage === "undefined") {
+    return "light";
+  }
+
+  const saved = localStorage.getItem(THEME_KEY);
+  return saved === "dark" ? "dark" : "light";
+}
+
+async function requestAssistantReply({ prompt, engine, history }) {
+  if (import.meta.env.DEV) {
+    return buildAssistantReply(prompt, engine);
+  }
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt, engine, history }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (typeof data.reply === "string" && data.reply.trim()) {
+      return data.reply.trim();
+    }
+  } catch {
+    // Fall back to the local simulator when the API is unavailable in dev.
+  }
+
+  return buildAssistantReply(prompt, engine);
+}
+
 function App() {
   const [initialChats] = useState(() => getSavedChats());
   const [chats, setChats] = useState(() => initialChats);
@@ -138,13 +175,13 @@ function App() {
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [booting, setBooting] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [theme, setTheme] = useState(() => getSavedTheme());
   const [renameChat, setRenameChat] = useState(null);
   const [editMessage, setEditMessage] = useState(null);
   const [copiedMessageId, setCopiedMessageId] = useState(null);
   const [deleteChatId, setDeleteChatId] = useState(null);
   const [deleteMessageTarget, setDeleteMessageTarget] = useState(null);
   const bottomRef = useRef(null);
-  const timerRef = useRef(null);
   const copyTimerRef = useRef(null);
 
   const selectedChat = useMemo(
@@ -153,9 +190,17 @@ function App() {
   );
 
   useEffect(() => {
+    // Persist chats locally so the history survives refreshes.
     if (typeof localStorage === "undefined") return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
   }, [chats]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(THEME_KEY, theme);
+    }
+  }, [theme]);
 
   useEffect(() => {
     if (!selectedChatId && chats[0]) {
@@ -177,7 +222,6 @@ function App() {
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) window.clearTimeout(timerRef.current);
       if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
     };
   }, []);
@@ -194,7 +238,7 @@ function App() {
     setDrawerOpen(true);
   }
 
-  function sendMessage() {
+  async function sendMessage() {
     const text = inputValue.trim();
     if (!text || !selectedChat || isLoading) return;
 
@@ -229,20 +273,24 @@ function App() {
     setInputValue("");
     setIsLoading(true);
 
-    timerRef.current = window.setTimeout(() => {
-      const reply = buildAssistantReply(text, selectedChat.engine);
-      const replyTime = now();
-      updateChat(selectedChat.id, (chat) => ({
-        ...chat,
-        messages: chat.messages.map((message) =>
-          message.id === loadingMessage.id
-            ? { ...message, content: reply, createdAt: replyTime }
-            : message,
-        ),
-        updatedAt: replyTime,
-      }));
-      setIsLoading(false);
-    }, 1000);
+    // Use Gemini in production, but fall back to the local simulator in dev or when offline.
+    const reply = await requestAssistantReply({
+      prompt: text,
+      engine: selectedChat.engine,
+      history: [...selectedChat.messages, userMessage].slice(-12),
+    });
+
+    const replyTime = now();
+    updateChat(selectedChat.id, (chat) => ({
+      ...chat,
+      messages: chat.messages.map((message) =>
+        message.id === loadingMessage.id
+          ? { ...message, content: reply, createdAt: replyTime }
+          : message,
+      ),
+      updatedAt: replyTime,
+    }));
+    setIsLoading(false);
   }
 
   function renameSelectedChat() {
@@ -362,7 +410,7 @@ function App() {
             aria-label={drawerOpen ? "Close sidebar" : "Open sidebar"}
             onClick={() => setDrawerOpen((value) => !value)}
           >
-            ×
+            �
           </button>
         </div>
 
@@ -437,7 +485,7 @@ function App() {
             </div>
           </div>
           <button type="button" className="footer-menu" aria-label="Account menu">
-            ⋯
+            ?
           </button>
         </div>
           </aside>
@@ -450,7 +498,17 @@ function App() {
                 aria-label={drawerOpen ? "Close sidebar" : "Open sidebar"}
                 onClick={() => setDrawerOpen((value) => !value)}
               >
-                ☰
+                ?
+              </button>
+
+              <button
+                type="button"
+                className="theme-toggle"
+                onClick={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? "Light mode" : "Dark mode"}
               </button>
 
               <label className="engine-picker">
@@ -759,6 +817,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

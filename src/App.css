@@ -12,6 +12,20 @@
   --shadow: 0 18px 55px rgba(23, 32, 51, 0.12);
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0c111b;
+  --surface: #131a29;
+  --surface-soft: #182131;
+  --line: #26314a;
+  --text: #ecf2ff;
+  --muted: #9aa7bd;
+  --accent: #78a9ff;
+  --accent-soft: #1a2540;
+  --danger: #ff6b6b;
+  --shadow: 0 18px 55px rgba(0, 0, 0, 0.32);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -29,6 +43,12 @@ body {
     radial-gradient(circle at top center, rgba(41, 72, 199, 0.06), transparent 35%),
     linear-gradient(180deg, #fbfcff, var(--bg));
   color: var(--text);
+}
+
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at top center, rgba(120, 169, 255, 0.14), transparent 32%),
+    linear-gradient(180deg, #111827, var(--bg));
 }
 
 .app-root {
@@ -212,6 +232,19 @@ button {
   font-size: 1rem;
   line-height: 1;
   flex: 0 0 auto;
+}
+
+.theme-toggle {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0 14px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .chat-header h2,
@@ -841,6 +874,59 @@ button {
 
 .composer-send:disabled {
   opacity: 0.55;
+}
+
+:root[data-theme="dark"] .sidebar,
+:root[data-theme="dark"] .chat-panel,
+:root[data-theme="dark"] .boot-card,
+:root[data-theme="dark"] .landing-card,
+:root[data-theme="dark"] .modal-card {
+  background: rgba(19, 26, 41, 0.94);
+  border-color: rgba(38, 49, 74, 0.9);
+}
+
+:root[data-theme="dark"] .sidebar {
+  background: rgba(16, 22, 35, 0.96);
+}
+
+:root[data-theme="dark"] .chat-item,
+:root[data-theme="dark"] .empty-state,
+:root[data-theme="dark"] .starter-card {
+  background: rgba(24, 33, 49, 0.95);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .engine-picker select,
+:root[data-theme="dark"] .modal-card input,
+:root[data-theme="dark"] .modal-card textarea,
+:root[data-theme="dark"] .composer-shell {
+  background: rgba(16, 22, 35, 0.96);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .composer-icon,
+:root[data-theme="dark"] .composer-send,
+:root[data-theme="dark"] .message-action,
+:root[data-theme="dark"] .drawer-toggle,
+:root[data-theme="dark"] .theme-toggle {
+  background: rgba(24, 33, 49, 0.98);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .message-name,
+:root[data-theme="dark"] .message-text,
+:root[data-theme="dark"] .landing-card p,
+:root[data-theme="dark"] .modal-card p,
+:root[data-theme="dark"] .composer-footer span,
+:root[data-theme="dark"] .chat-meta,
+:root[data-theme="dark"] .section-title {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .message-avatar.user {
+  background: #2b3448;
+  color: #dbe4f3;
 }
 
 .composer-footer {
