@@ -507,7 +507,8 @@ button {
 }
 
 .message-row.user {
-  justify-content: flex-start;
+  justify-content: flex-end;
+  flex-direction: row-reverse;
 }
 
 .message-row.assistant {
@@ -578,6 +579,12 @@ button {
   padding-right: 96px;
 }
 
+.message-row.user .message-text {
+  padding-right: 0;
+  padding-left: 96px;
+  text-align: right;
+}
+
 .message-footer {
   margin-top: 10px;
   display: flex;
@@ -602,6 +609,8 @@ button {
 
 .message-row.user:hover .message-hover-actions {
   display: flex;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .message-action {

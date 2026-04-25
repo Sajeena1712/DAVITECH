@@ -1,28 +1,22 @@
-# DaivAI - AI Chat Interface
+# DaivAI
 
-DaivAI is a React + JavaScript ChatGPT-style web app built for the frontend task. It focuses on the main product flows: creating chats, switching chats, sending messages, editing messages, deleting messages, and switching AI engines from the UI.
+DaivAI is a React-based AI chat web application that simulates a ChatGPT-style conversation experience with multiple chats, editable messages, chat management, and selectable AI engines.
 
-## Structure
+## Features
 
-- `src/App.jsx` contains the full app logic and rendering
-- `src/App.css` contains all styling
-
-## Completed Features
-
-- Left sidebar with app title and `+ New Chat`
-- Chat history list
-- Switch between chats
-- Rename chat
-- Delete chat with confirmation popup
-- Right chat playground with engine dropdown
-- Send messages from the input box
-- Simulated AI replies
-- Edit message popup
-- Delete message confirmation popup
-- Loading / typing animation while the AI reply is generated
-- localStorage persistence
+- Left sidebar with app branding and `+ New Chat`
+- Multiple chat sessions with local persistence
+- Rename chat via modal
+- Delete chat with confirmation dialog
+- Right-side chat playground with engine selector
+- Message composer with Enter-to-send support
+- User and assistant conversation flow
+- Loading / typing indicator while the assistant reply is generated
+- Edit user messages through a modal
+- Delete user messages through a confirmation dialog
+- Hover actions on user messages
 - Responsive layout
-- Clean white theme
+- Clean white theme inspired by the reference design
 
 ## AI Engines
 
@@ -31,12 +25,12 @@ DaivAI is a React + JavaScript ChatGPT-style web app built for the frontend task
 - Synapse Ultra
 - Logic Core
 
-## Assumptions
+## Implementation Notes
 
-- AI responses are simulated locally instead of calling a live API.
-- Markdown rendering was not added to keep the project simple and easy to review.
-- No icon library was used.
-- The code is intentionally kept small and direct so it looks like a normal student/intern project.
+- The assistant response is simulated locally instead of calling a live API.
+- Chat state is stored in `localStorage`, so chats persist after refresh.
+- The project uses React functional components and hooks.
+- The production build is generated with Vite.
 
 ## Setup
 
@@ -46,7 +40,7 @@ DaivAI is a React + JavaScript ChatGPT-style web app built for the frontend task
 npm install
 ```
 
-2. Start the development server:
+2. Start the app locally:
 
 ```bash
 npm run dev
@@ -54,9 +48,19 @@ npm run dev
 
 3. Open the local URL shown in the terminal, usually `http://localhost:5173/`
 
-```
+## Files
 
-## Notes
+- `src/App.jsx` - main chat logic and UI
+- `src/App.css` - styling
+- `src/main.jsx` - app bootstrap
 
-- The app state stays in `localStorage`, so chats remain after refresh.
-- The codebase is intentionally minimal and uses only two source files to keep it easy to understand.
+## Submission Summary
+
+This project covers the core assignment flow:
+
+- Create and switch between chats
+- Send messages and receive simulated AI responses
+- Edit and delete messages
+- Rename and delete chats
+- Select between multiple AI engines
+
