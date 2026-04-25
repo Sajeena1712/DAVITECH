@@ -54,37 +54,6 @@ npm run dev
 
 3. Open the local URL shown in the terminal, usually `http://localhost:5173/`
 
-## Submission Email
-
-Send the GitHub repository link and short feature summary to:
-
-`career@daivtech.com`
-
-Suggested email:
-
-```text
-Subject: DaivAI - AI Chat Interface Submission
-
-Hi Team,
-
-I am sharing my DaivAI - AI Chat Interface assignment submission.
-
-Completed features:
-- Multiple chats with sidebar navigation
-- New chat creation
-- Rename and delete chats
-- Send messages with simulated AI replies
-- Edit and delete messages
-- AI engine dropdown
-- localStorage persistence
-- Loading screen and responsive layout
-
-GitHub link: <your-github-link>
-
-Thank you for your time and review.
-
-Best,
-<Your Name>
 ```
 
 ## Notes
