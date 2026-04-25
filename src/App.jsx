@@ -598,7 +598,13 @@ function App() {
             </section>
 
             <footer className="composer">
-              <div className="composer-shell">
+              <form
+                className="composer-shell"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  sendMessage();
+                }}
+              >
                 <button type="button" className="composer-icon" aria-label="Attach file">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path
@@ -646,9 +652,8 @@ function App() {
                     </svg>
                   </button>
                   <button
-                    type="button"
+                    type="submit"
                     className="composer-send"
-                    onClick={sendMessage}
                     disabled={isLoading}
                     aria-label="Send message"
                   >
@@ -663,7 +668,7 @@ function App() {
                     </svg>
                   </button>
                 </div>
-              </div>
+              </form>
               <div className="composer-footer">
                 <span>Press Enter to send, Shift+Enter for a new line</span>
                 <span>{inputValue.length} / 4000</span>
