@@ -33,6 +33,7 @@ DaivAI is a React-based AI chat web application that simulates a ChatGPT-style c
 
 - The assistant response is simulated locally unless the Gemini key is configured.
 - In production, assistant replies are routed through Gemini from the `/api/chat` endpoint.
+- The frontend can also call Gemini directly when `VITE_GEMINI_API_KEY` is available, which is useful as a fallback if the server route is unavailable.
 - The backend accepts either `GEMINI_API_KEY` or `VITE_GEMINI_API_KEY`, but `GEMINI_API_KEY` is the preferred name for Render.
 - Authentication can use MongoDB through `/api/auth` when `VITE_MONGO_AUTH_ENABLED=true`.
 - Chat state is stored in `localStorage`, so chats persist after refresh.

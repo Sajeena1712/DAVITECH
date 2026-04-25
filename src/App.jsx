@@ -213,12 +213,9 @@ function isStrongPassword(password) {
 }
 
 async function requestAssistantReply({ prompt, engine, history }) {
-  const isLocalHost =
-    typeof window !== "undefined" &&
-    /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(window.location.hostname);
-  const localApiKey = isLocalHost ? import.meta.env.VITE_GEMINI_API_KEY : "";
+  const browserApiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-  if (localApiKey) {
+  if (browserApiKey) {
     try {
       const profiles = {
         "Neural Nexus": {
@@ -254,7 +251,7 @@ async function requestAssistantReply({ prompt, engine, history }) {
       }
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(localApiKey)}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(browserApiKey)}`,
         {
           method: "POST",
           headers: {
