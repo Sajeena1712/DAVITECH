@@ -3,6 +3,7 @@ import "./App.css";
 
 const STORAGE_KEY = "daivai-chats-v1";
 const THEME_KEY = "daivai-theme-v1";
+const AUTH_KEY = "daivai-auth-v1";
 
 const ENGINE_OPTIONS = [
   "Neural Nexus",
@@ -98,13 +99,13 @@ function getChatTitle(text) {
   return trimmed.split(/\s+/).slice(0, 5).join(" ");
 }
 
-function getSavedChats() {
+function getSavedChats(email) {
   if (typeof localStorage === "undefined") {
     return [createChat()];
   }
 
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(getChatsStorageKey(email));
     if (!raw) return [createChat()];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) return [createChat()];
@@ -139,10 +140,99 @@ function getSavedTheme() {
   return saved === "dark" ? "dark" : "light";
 }
 
-async function requestAssistantReply({ prompt, engine, history }) {
-  if (import.meta.env.DEV) {
-    return buildAssistantReply(prompt, engine);
+function getChatsStorageKey(email) {
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+  return normalizedEmail ? `${STORAGE_KEY}:${normalizedEmail}` : STORAGE_KEY;
+}
+
+function getSavedSession() {
+  if (typeof localStorage === "undefined") {
+    return null;
   }
+
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const email = typeof parsed?.email === "string" ? parsed.email.trim() : "";
+    if (!email) return null;
+    return { email };
+  } catch {
+    return null;
+  }
+}
+
+async function requestAssistantReply({ prompt, engine, history }) {
+  const localApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+  if (localApiKey) {
+    try {
+      const profiles = {
+        "Neural Nexus": {
+          system: "You are DaivAI, a friendly and clear assistant. Keep answers concise and helpful.",
+          temperature: 0.7,
+        },
+        "Cerebral Prime": {
+          system: "You are DaivAI, a thoughtful assistant. Give detailed, well-structured answers.",
+          temperature: 0.5,
+        },
+        "Synapse Ultra": {
+          system: "You are DaivAI, a fast assistant. Prefer short, practical answers.",
+          temperature: 0.4,
+        },
+        "Logic Core": {
+          system: "You are DaivAI, a precise assistant. Be direct, logical, and easy to scan.",
+          temperature: 0.2,
+        },
+      };
+      const profile = profiles[engine] ?? profiles["Neural Nexus"];
+      const contents = (Array.isArray(history) ? history : [])
+        .filter((message) => message && typeof message.content === "string")
+        .map((message) => ({
+          role: message.role === "assistant" ? "model" : "user",
+          parts: [{ text: message.content }],
+        }));
+
+      if (!contents.length) {
+        contents.push({
+          role: "user",
+          parts: [{ text: prompt }],
+        });
+      }
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(localApiKey)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: profile.system }],
+            },
+            contents,
+            generationConfig: {
+              temperature: profile.temperature,
+            },
+          }),
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const reply =
+          data?.candidates?.[0]?.content?.parts?.map((part) => part?.text || "").join("").trim() || "";
+
+        if (reply) {
+          return reply;
+        }
+      }
+    } catch {
+      // Fall through to the serverless route or local simulator.
+    }
+  }
+
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
@@ -161,14 +251,20 @@ async function requestAssistantReply({ prompt, engine, history }) {
       return data.reply.trim();
     }
   } catch {
-    // Fall back to the local simulator when the API is unavailable in dev.
+    // Fall back to the local simulator when the API is unavailable.
   }
 
   return buildAssistantReply(prompt, engine);
 }
 
 function App() {
-  const [initialChats] = useState(() => getSavedChats());
+  const [authUser, setAuthUser] = useState(() => getSavedSession());
+  const [loginEmail, setLoginEmail] = useState(() => getSavedSession()?.email ?? "");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [initialChats] = useState(() => getSavedChats(getSavedSession()?.email));
   const [chats, setChats] = useState(() => initialChats);
   const [selectedChatId, setSelectedChatId] = useState(() => initialChats[0]?.id ?? "");
   const [inputValue, setInputValue] = useState("");
@@ -189,11 +285,17 @@ function App() {
     [chats, selectedChatId],
   );
 
+  const chatStorageKey = useMemo(
+    () => getChatsStorageKey(authUser?.email),
+    [authUser?.email],
+  );
+
   useEffect(() => {
     // Persist chats locally so the history survives refreshes.
     if (typeof localStorage === "undefined") return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
-  }, [chats]);
+    if (!authUser?.email) return;
+    localStorage.setItem(chatStorageKey, JSON.stringify(chats));
+  }, [authUser?.email, chatStorageKey, chats]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -207,6 +309,25 @@ function App() {
       setSelectedChatId(chats[0].id);
     }
   }, [selectedChatId, chats]);
+
+  useEffect(() => {
+    if (typeof localStorage === "undefined") return;
+    if (!authUser?.email || !rememberMe) {
+      localStorage.removeItem(AUTH_KEY);
+      return;
+    }
+    localStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
+  }, [authUser, rememberMe]);
+
+  useEffect(() => {
+    if (authUser?.email) {
+      const nextChats = getSavedChats(authUser.email);
+      setChats(nextChats);
+      setSelectedChatId(nextChats[0]?.id ?? "");
+      setLoginEmail(authUser.email);
+      setAuthError("");
+    }
+  }, [authUser?.email]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -228,6 +349,55 @@ function App() {
 
   function updateChat(chatId, updater) {
     setChats((current) => current.map((chat) => (chat.id === chatId ? updater(chat) : chat)));
+  }
+
+  function handleLogin(event) {
+    event.preventDefault();
+    const email = loginEmail.trim().toLowerCase();
+    const password = loginPassword.trim();
+
+    if (!email || !email.includes("@")) {
+      setAuthError("Enter a valid email address.");
+      return;
+    }
+
+    if (password.length < 4) {
+      setAuthError("Password should be at least 4 characters.");
+      return;
+    }
+
+    const nextSession = { email };
+    const nextChats = getSavedChats(email);
+    setAuthUser(nextSession);
+    setChats(nextChats);
+    setSelectedChatId(nextChats[0]?.id ?? "");
+    setLoginPassword("");
+    setAuthError("");
+    setDrawerOpen(true);
+
+    if (typeof localStorage !== "undefined") {
+      if (rememberMe) {
+        localStorage.setItem(AUTH_KEY, JSON.stringify(nextSession));
+      } else {
+        localStorage.removeItem(AUTH_KEY);
+      }
+    }
+  }
+
+  function handleLogout() {
+    setAuthUser(null);
+    setLoginPassword("");
+    setAuthError("");
+    setSelectedChatId("");
+    setChats([createChat()]);
+    setInputValue("");
+    setRenameChat(null);
+    setEditMessage(null);
+    setDeleteChatId(null);
+    setDeleteMessageTarget(null);
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(AUTH_KEY);
+    }
   }
 
   function createNewChat() {
@@ -378,6 +548,92 @@ function App() {
     "Explain this code simply",
   ];
 
+  if (!authUser) {
+    return (
+      <div className="app-root">
+        {booting ? (
+          <div className="boot-screen">
+            <div className="boot-card">
+              <div className="boot-logo">
+                <span>DA</span>
+              </div>
+              <h1>DaivAI</h1>
+              <p>Loading AI model...</p>
+              <div className="boot-progress" aria-hidden="true">
+                <span />
+              </div>
+              <div className="boot-dots" aria-label="Loading">
+                <span />
+                <span />
+                <span />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="auth-screen">
+            <div className="auth-card">
+              <div className="auth-brand">
+                <div>
+                  <h1>DaivAI</h1>
+                  <p>Sign in to continue to your chat workspace.</p>
+                </div>
+              </div>
+
+              <form className="auth-form" onSubmit={handleLogin}>
+                <label className="auth-field">
+                  <span>Email</span>
+                  <input
+                    type="email"
+                    value={loginEmail}
+                    onChange={(event) => setLoginEmail(event.target.value)}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                  />
+                </label>
+
+                <label className="auth-field">
+                  <span>Password</span>
+                  <div className="auth-password-row">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={loginPassword}
+                      onChange={(event) => setLoginPassword(event.target.value)}
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword((value) => !value)}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </label>
+
+                <label className="auth-remember">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                  />
+                  <span>Remember me on this device</span>
+                </label>
+
+                {authError && <div className="auth-error">{authError}</div>}
+
+                <button type="submit" className="auth-submit">
+                  Sign in
+                </button>
+                <div className="auth-note">Use any valid email and a password with at least 4 characters.</div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="app-root">
       {booting ? (
@@ -410,7 +666,7 @@ function App() {
             aria-label={drawerOpen ? "Close sidebar" : "Open sidebar"}
             onClick={() => setDrawerOpen((value) => !value)}
           >
-            �
+            <span aria-hidden="true">×</span>
           </button>
         </div>
 
@@ -480,12 +736,15 @@ function App() {
           <div className="user-chip">
             <span className="user-avatar">U</span>
             <div className="user-info">
-              <strong>User</strong>
-              <span>user@daivai.com</span>
+              <strong>{authUser.email}</strong>
+              <span>Signed in</span>
             </div>
           </div>
-          <button type="button" className="footer-menu" aria-label="Account menu">
-            ?
+          <button type="button" className="footer-menu logout-button" aria-label="Log out" onClick={handleLogout}>
+            <span aria-hidden="true">⎋</span>
+          </button>
+                    <button type="button" className="footer-menu" aria-label="Account menu">
+            <span aria-hidden="true">☰</span>
           </button>
         </div>
           </aside>
@@ -498,7 +757,7 @@ function App() {
                 aria-label={drawerOpen ? "Close sidebar" : "Open sidebar"}
                 onClick={() => setDrawerOpen((value) => !value)}
               >
-                ?
+                <span aria-hidden="true">☰</span>
               </button>
 
               <button
