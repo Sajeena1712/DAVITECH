@@ -768,6 +768,23 @@ function App() {
     "Turn my idea into bullet points",
     "Explain this code simply",
   ];
+  const authHighlights = {
+    signin: [
+      "Private session handling",
+      "Strong password protection",
+      "Fast return to your chats",
+    ],
+    signup: [
+      "Create a secure account",
+      "Password strength is enforced",
+      "Your chats stay tied to your email",
+    ],
+    forgot: [
+      "Reset access safely",
+      "Choose a fresh strong password",
+      "Resume the same private workspace",
+    ],
+  };
 
   if (!authUser) {
     return (
@@ -792,106 +809,126 @@ function App() {
           </div>
         ) : (
           <div className="auth-screen">
-            <div className="auth-card">
-              <div className="auth-brand">
-                <div>
-                  <h1>DaivAI</h1>
-                  <p>
-                    {authMode === "signup"
-                      ? "Create your account to start chatting."
-                      : authMode === "forgot"
-                        ? "Reset your password and return to chat."
-                        : "Sign in to continue to your chat workspace."}
-                  </p>
+            <div className="auth-layout">
+              <aside className="auth-hero">
+                <div className="auth-hero-badge">Privacy first</div>
+                <h2>Secure access for every chat session</h2>
+                <p>
+                  DaivAI keeps the login flow simple, protected, and easy to trust. Your account is tied to your email, your password is validated for strength, and your workspace stays personal.
+                </p>
+                <ul className="auth-hero-list">
+                  {authHighlights[authMode].map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+                <div className="auth-hero-footer">
+                  <span>Encrypted session</span>
+                  <span>Private workspace</span>
+                  <span>Safe password reset</span>
                 </div>
-              </div>
+              </aside>
 
-              <form className="auth-form" onSubmit={handleAuthSubmit}>
-                {authMode === "signup" && (
-                  <label className="auth-field">
-                    <span>Name</span>
-                    <input
-                      type="text"
-                      value={authName}
-                      onChange={(event) => setAuthName(event.target.value)}
-                      placeholder="Your full name"
-                      autoComplete="name"
-                    />
-                  </label>
-                )}
-
-                <label className="auth-field">
-                  <span>Email</span>
-                  <input
-                    type="email"
-                    value={authEmail}
-                    onChange={(event) => setAuthEmail(event.target.value)}
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                  />
-                </label>
-
-                <label className="auth-field">
-                  <span>{authMode === "forgot" ? "New password" : "Password"}</span>
-                  <div className="auth-password-row">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={authPassword}
-                      onChange={(event) => setAuthPassword(event.target.value)}
-                      placeholder={authMode === "forgot" ? "Enter a new password" : "Enter your password"}
-                      autoComplete="current-password"
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() => setShowPassword((value) => !value)}
-                    >
-                      {showPassword ? "Hide" : "Show"}
-                    </button>
+              <section className="auth-card">
+                <div className="auth-brand">
+                  <div>
+                    <h1>DaivAI</h1>
+                    <p>
+                      {authMode === "signup"
+                        ? "Create your account to start chatting."
+                        : authMode === "forgot"
+                          ? "Reset your password and return to chat."
+                          : "Sign in to continue to your chat workspace."}
+                    </p>
                   </div>
-                </label>
+                </div>
 
-                {authMode !== "forgot" && (
-                  <label className="auth-remember">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(event) => setRememberMe(event.target.checked)}
-                    />
-                    <span>Remember me on this device</span>
-                  </label>
-                )}
-
-                {authNotice && <div className="auth-notice">{authNotice}</div>}
-                {authError && <div className="auth-error">{authError}</div>}
-
-                <button type="submit" className="auth-submit">
-                  {authMode === "signup" ? "Create account" : authMode === "forgot" ? "Update password" : "Sign in"}
-                </button>
-                <div className="auth-links">
-                  {authMode === "signin" ? (
-                    <>
-                      <button type="button" onClick={() => switchAuthMode("forgot")}>
-                        Forgot password?
-                      </button>
-                      <button type="button" onClick={() => switchAuthMode("signup")}>
-                        Need an account?
-                      </button>
-                    </>
-                  ) : (
-                    <button type="button" onClick={() => switchAuthMode("signin")}>
-                      Back to sign in
-                    </button>
+                <form className="auth-form" onSubmit={handleAuthSubmit}>
+                  {authMode === "signup" && (
+                    <label className="auth-field">
+                      <span>Name</span>
+                      <input
+                        type="text"
+                        value={authName}
+                        onChange={(event) => setAuthName(event.target.value)}
+                        placeholder="Your full name"
+                        autoComplete="name"
+                      />
+                    </label>
                   )}
-                </div>
-                <div className="auth-note">
-                  {authMode === "signup"
-                    ? "Password must be 8+ characters and include upper, lower, number, and symbol."
-                    : authMode === "forgot"
-                      ? "Enter your email and choose a new strong password."
-                      : "Use your registered email and password to sign in."}
-                </div>
-              </form>
+
+                  <label className="auth-field">
+                    <span>Email</span>
+                    <input
+                      type="email"
+                      value={authEmail}
+                      onChange={(event) => setAuthEmail(event.target.value)}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                    />
+                  </label>
+
+                  <label className="auth-field">
+                    <span>{authMode === "forgot" ? "New password" : "Password"}</span>
+                    <div className="auth-password-row">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={authPassword}
+                        onChange={(event) => setAuthPassword(event.target.value)}
+                        placeholder={authMode === "forgot" ? "Enter a new password" : "Enter your password"}
+                        autoComplete="current-password"
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setShowPassword((value) => !value)}
+                      >
+                        {showPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </label>
+
+                  {authMode !== "forgot" && (
+                    <label className="auth-remember">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(event) => setRememberMe(event.target.checked)}
+                      />
+                      <span>Remember me on this device</span>
+                    </label>
+                  )}
+
+                  {authNotice && <div className="auth-notice">{authNotice}</div>}
+                  {authError && <div className="auth-error">{authError}</div>}
+
+                  <button type="submit" className="auth-submit">
+                    {authMode === "signup" ? "Create account" : authMode === "forgot" ? "Update password" : "Sign in"}
+                  </button>
+                  <div className="auth-links">
+                    {authMode === "signin" ? (
+                      <>
+                        <button type="button" onClick={() => switchAuthMode("forgot")}>
+                          Forgot password?
+                        </button>
+                        <button type="button" onClick={() => switchAuthMode("signup")}>
+                          Need an account?
+                        </button>
+                      </>
+                    ) : (
+                      <button type="button" onClick={() => switchAuthMode("signin")}>
+                        Back to sign in
+                      </button>
+                    )}
+                  </div>
+                  <div className="auth-note">
+                    {authMode === "signup"
+                      ? "Password must be 8+ characters and include upper, lower, number, and symbol."
+                      : authMode === "forgot"
+                        ? "Enter your email and choose a new strong password."
+                        : "Use your registered email and password to sign in."}
+                  </div>
+                </form>
+              </section>
             </div>
           </div>
         )}
