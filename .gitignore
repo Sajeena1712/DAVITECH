@@ -1,0 +1,5 @@
+node_modules/
+.gh-pages-tmp/
+.playwright-cli/
+.netlify/
+*.log

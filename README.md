@@ -57,7 +57,8 @@ npm run dev
 4. The dev command starts both the Vite UI and the local API server, so `/api/chat` and `/api/auth` work in development too.
 
 5. Add your Hugging Face token as `HF_TOKEN` in your deployment environment. Optionally set `HF_MODEL` to choose the chat model, for example `Qwen/Qwen2.5-7B-Instruct`. For local testing, set the same value in your shell or a local env file.
-6. To enable MongoDB auth in production, set:
+6. If your frontend is deployed on Netlify but your backend runs on Render, set `VITE_API_BASE_URL` to your Render app URL, for example `https://your-backend.onrender.com`. If your Netlify dashboard currently uses `VITE_API_URL`, the app will also accept that name. The Render backend now sends CORS headers for `/api/chat` and `/api/auth`.
+7. To enable MongoDB auth in production, set:
 
 ```bash
 VITE_MONGO_AUTH_ENABLED=true
@@ -68,18 +69,32 @@ MONGODB_DATABASE=daivai
 MONGODB_USERS_COLLECTION=users
 ```
 
-## GitHub Pages Deploy
+## Netlify Deploy
 
-To publish the built app to GitHub Pages:
+This project also runs on Netlify.
 
-```bash
-npm run deploy
-```
+Use these build settings:
 
-The deploy script builds the app and publishes `dist` to the `gh-pages` branch. In GitHub Pages settings, use:
+- Build command: `npm run build`
+- Publish directory: `dist`
+- Functions directory: `netlify/functions`
 
-- Branch: `gh-pages`
-- Folder: `/ (root)`
+Required environment variables:
+
+- `HF_TOKEN`
+- `HF_MODEL` (optional, default: `Qwen/Qwen2.5-7B-Instruct`)
+- `VITE_MONGO_AUTH_ENABLED=true` if you want MongoDB auth
+- `MONGODB_APP_ID` or `MONGODB_DATA_API_URL`
+- `MONGODB_DATA_API_KEY`
+- `MONGODB_DATA_SOURCE`
+- `MONGODB_DATABASE`
+- `MONGODB_USERS_COLLECTION`
+
+Netlify routes `/api/chat` and `/api/auth` to serverless functions, so the same frontend works without the custom local server.
+
+## Static Hosting Notes
+
+The app uses relative asset paths, so the same build can run on Netlify, GitHub Pages, or Render static hosting without a custom base path.
 
 ## Files
 

@@ -6,6 +6,13 @@ const THEME_KEY = "daivai-theme-v1";
 const AUTH_KEY = "daivai-auth-v1";
 const USERS_KEY = "daivai-users-v1";
 const MONGO_AUTH_ENABLED = import.meta.env.VITE_MONGO_AUTH_ENABLED === "true";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  ""
+)
+  .trim()
+  .replace(/\/$/, "");
 
 const ENGINE_OPTIONS = [
   "Neural Nexus",
@@ -222,8 +229,13 @@ function getPasswordChecks(password) {
   ];
 }
 
+function apiUrl(path) {
+  if (!API_BASE_URL) return path;
+  return `${API_BASE_URL}${path}`;
+}
+
 async function requestAssistantReply({ prompt, engine, history }) {
-  const response = await fetch("/api/chat", {
+  const response = await fetch(apiUrl("/api/chat"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -246,7 +258,7 @@ async function requestAssistantReply({ prompt, engine, history }) {
 }
 
 async function requestMongoAuth(payload) {
-  const response = await fetch("/api/auth", {
+  const response = await fetch(apiUrl("/api/auth"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

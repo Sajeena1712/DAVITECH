@@ -58,6 +58,9 @@ function send(res, statusCode, body, headers = {}) {
 function sendJson(res, statusCode, payload) {
   send(res, statusCode, JSON.stringify(payload), {
     "Content-Type": "application/json; charset=utf-8",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
   });
 }
 
@@ -138,6 +141,16 @@ async function serveStatic(res, pathname) {
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", "http://localhost");
+
+    if (req.method === "OPTIONS" && (url.pathname === "/api/chat" || url.pathname === "/api/auth")) {
+      res.writeHead(204, {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      });
+      res.end();
+      return;
+    }
 
     if (url.pathname === "/api/chat") {
       const result = await invokeHandler(chatHandler, req);
