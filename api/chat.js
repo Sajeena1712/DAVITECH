@@ -57,11 +57,7 @@ function buildMessages(prompt, history, systemPrompt) {
 }
 
 async function requestHuggingFaceReply({ prompt, engine, history }) {
-  const token =
-    process.env.HF_TOKEN ||
-    (typeof process.env.GEMINI_API_KEY === "string" && process.env.GEMINI_API_KEY.startsWith("hf_")
-      ? process.env.GEMINI_API_KEY
-      : "");
+  const token = process.env.HF_TOKEN || "";
   if (!token) {
     throw new Error("Missing HF_TOKEN");
   }

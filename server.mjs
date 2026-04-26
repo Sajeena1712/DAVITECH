@@ -34,10 +34,6 @@ const distDir = path.join(__dirname, "dist");
 await loadEnvFile(path.join(__dirname, ".env.local"));
 await loadEnvFile(path.join(__dirname, ".env"));
 
-if (!process.env.HF_TOKEN && typeof process.env.GEMINI_API_KEY === "string" && process.env.GEMINI_API_KEY.startsWith("hf_")) {
-  process.env.HF_TOKEN = process.env.GEMINI_API_KEY;
-}
-
 const chatHandler = (await import("./api/chat.js")).default;
 const authHandler = (await import("./api/auth.js")).default;
 
