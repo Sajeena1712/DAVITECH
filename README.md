@@ -31,10 +31,9 @@ DaivAI is a React-based AI chat web application that simulates a ChatGPT-style c
 
 ## Implementation Notes
 
-- The assistant response is simulated locally unless the Gemini key is configured.
-- In production, assistant replies are routed through Gemini from the `/api/chat` endpoint.
-- The frontend can also call Gemini directly when `VITE_GEMINI_API_KEY` is available, which is useful as a fallback if the server route is unavailable.
-- The backend accepts either `GEMINI_API_KEY` or `VITE_GEMINI_API_KEY`, but `GEMINI_API_KEY` is the preferred name for Render.
+- The assistant response is simulated locally unless an API token is configured.
+- In production, assistant replies are routed through `/api/chat`, which uses Hugging Face when `HF_TOKEN` is set and falls back to Gemini when a Gemini key is available.
+- Do not expose API keys with a `VITE_` prefix. Keep secrets on the server as `HF_TOKEN` or `GEMINI_API_KEY`.
 - Authentication can use MongoDB through `/api/auth` when `VITE_MONGO_AUTH_ENABLED=true`.
 - Chat state is stored in `localStorage`, so chats persist after refresh.
 - The project uses React functional components and hooks.
@@ -56,7 +55,7 @@ npm run dev
 
 3. Open the local URL shown in the terminal, usually `http://localhost:5173/`
 
-4. Add your Gemini key as `GEMINI_API_KEY` in your deployment environment. If your host already uses `VITE_GEMINI_API_KEY`, the server also accepts that name. For local testing, put it in `.env.local`.
+4. Add your Hugging Face token as `HF_TOKEN` in your deployment environment. Optionally set `HF_MODEL` to choose the chat model. If you still want Gemini as a fallback, set `GEMINI_API_KEY` too. For local testing, set the same values in your shell or a local env file.
 5. To enable MongoDB auth in production, set:
 
 ```bash
@@ -73,7 +72,7 @@ MONGODB_USERS_COLLECTION=users
 - `src/App.jsx` - main chat logic and UI
 - `src/App.css` - styling
 - `src/main.jsx` - app bootstrap
-- `api/chat.js` - Gemini serverless proxy
+- `api/chat.js` - Hugging Face / Gemini chat proxy
 - `api/auth.js` - MongoDB-backed authentication endpoint
 
 ## Submission Summary

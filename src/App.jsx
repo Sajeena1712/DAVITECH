@@ -223,12 +223,7 @@ function getPasswordChecks(password) {
 }
 
 async function requestAssistantReply({ prompt, engine, history }) {
-  const browserApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  const isLocalHost =
-    typeof window !== "undefined" &&
-    /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(window.location.hostname);
-
-  if (!isLocalHost) {
+  try {
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: {
@@ -239,85 +234,19 @@ async function requestAssistantReply({ prompt, engine, history }) {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data?.error || `Gemini request failed with status ${response.status}`);
+      throw new Error(data?.error || `Request failed with status ${response.status}`);
     }
 
     const data = await response.json();
     const reply = typeof data.reply === "string" ? data.reply.trim() : "";
-    if (!reply) {
-      throw new Error("Gemini returned an empty response.");
+    if (reply) {
+      return reply;
     }
-    return reply;
+  } catch {
+    // Fall back to the local simulator when the API is unavailable.
   }
 
-  if (browserApiKey) {
-    try {
-      const profiles = {
-        "Neural Nexus": {
-          system: "You are DaivAI, a friendly and clear assistant. Keep answers concise and helpful.",
-          temperature: 0.7,
-        },
-        "Cerebral Prime": {
-          system: "You are DaivAI, a thoughtful assistant. Give detailed, well-structured answers.",
-          temperature: 0.5,
-        },
-        "Synapse Ultra": {
-          system: "You are DaivAI, a fast assistant. Prefer short, practical answers.",
-          temperature: 0.4,
-        },
-        "Logic Core": {
-          system: "You are DaivAI, a precise assistant. Be direct, logical, and easy to scan.",
-          temperature: 0.2,
-        },
-      };
-      const profile = profiles[engine] ?? profiles["Neural Nexus"];
-      const contents = (Array.isArray(history) ? history : [])
-        .filter((message) => message && typeof message.content === "string")
-        .map((message) => ({
-          role: message.role === "assistant" ? "model" : "user",
-          parts: [{ text: message.content }],
-        }));
-
-      if (!contents.length) {
-        contents.push({
-          role: "user",
-          parts: [{ text: prompt }],
-        });
-      }
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(browserApiKey)}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: profile.system }],
-            },
-            contents,
-            generationConfig: {
-              temperature: profile.temperature,
-            },
-          }),
-        },
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const reply = data?.candidates?.[0]?.content?.parts?.map((part) => part?.text || "").join("").trim() || "";
-
-        if (reply) {
-          return reply;
-        }
-      }
-    } catch {
-      // Fall through to the server route or an explicit error.
-    }
-  }
-
-  throw new Error("Gemini is not configured for this environment.");
+  return buildAssistantReply(prompt, engine);
 }
 
 async function requestMongoAuth(payload) {

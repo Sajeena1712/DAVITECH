@@ -3,8 +3,37 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFile, stat } from "node:fs/promises";
 
+async function loadEnvFile(filePath) {
+  try {
+    const raw = await readFile(filePath, "utf8");
+    for (const line of raw.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const equalIndex = trimmed.indexOf("=");
+      if (equalIndex === -1) continue;
+      const key = trimmed.slice(0, equalIndex).trim();
+      let value = trimmed.slice(equalIndex + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      if (!process.env[key]) {
+        process.env[key] = value;
+      }
+    }
+  } catch {
+    // Ignore missing local env files.
+  }
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(__dirname, "dist");
+
+await loadEnvFile(path.join(__dirname, ".env.local"));
+await loadEnvFile(path.join(__dirname, ".env"));
+
 const chatHandler = (await import("./api/chat.js")).default;
 const authHandler = (await import("./api/auth.js")).default;
 
