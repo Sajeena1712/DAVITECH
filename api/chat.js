@@ -104,76 +104,8 @@ export default async function handler(req, res) {
 
   try {
     const { prompt, engine, history } = req.body ?? {};
-    try {
-      const reply = await requestHuggingFaceReply({ prompt, engine, history });
-      res.status(200).json({ reply, provider: "huggingface" });
-      return;
-    } catch (hfError) {
-      const geminiApiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
-      if (!geminiApiKey) {
-        throw hfError;
-      }
-
-      const profile = ENGINE_PROFILES[engine] ?? ENGINE_PROFILES["Neural Nexus"];
-      const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-
-      const contents = Array.isArray(history)
-        ? history
-            .filter((message) => message && typeof message.content === "string")
-            .map((message) => ({
-              role: toGeminiRole(message.role),
-              parts: [{ text: message.content }],
-            }))
-        : [];
-
-      if (!contents.length && typeof prompt === "string") {
-        contents.push({
-          role: "user",
-          parts: [{ text: prompt }],
-        });
-      }
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": geminiApiKey,
-          },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: profile.system }],
-            },
-            contents,
-            generationConfig: {
-              temperature: profile.temperature,
-            },
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        res.status(response.status).json({ error: errorText || "Gemini request failed" });
-        return;
-      }
-
-      const data = await response.json();
-      const reply =
-        data?.candidates?.[0]?.content?.parts
-          ?.map((part) => part?.text || "")
-          .join("")
-          .trim() || "";
-
-      if (!reply) {
-        res.status(502).json({ error: "Empty Gemini response" });
-        return;
-      }
-
-      res.status(200).json({ reply, provider: "gemini" });
-      return;
-    }
+    const reply = await requestHuggingFaceReply({ prompt, engine, history });
+    res.status(200).json({ reply, provider: "huggingface" });
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : "Unknown error" });
   }

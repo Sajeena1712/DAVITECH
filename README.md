@@ -15,7 +15,7 @@ DaivAI is a React-based AI chat web application that simulates a ChatGPT-style c
 - Edit user messages through a modal
 - Delete user messages through a confirmation dialog
 - Hover actions on user messages
-- Gemini API support through a serverless endpoint
+- Hugging Face chat support through a server-side endpoint
 - Separate sign in, sign up, and forgot-password pages
 - Optional MongoDB-backed authentication for sign in, sign up, and password reset
 - Dark mode toggle
@@ -32,8 +32,8 @@ DaivAI is a React-based AI chat web application that simulates a ChatGPT-style c
 ## Implementation Notes
 
 - The assistant response is simulated locally unless an API token is configured.
-- In production, assistant replies are routed through `/api/chat`, which uses Hugging Face when `HF_TOKEN` is set and falls back to Gemini when a Gemini key is available.
-- Do not expose API keys with a `VITE_` prefix. Keep secrets on the server as `HF_TOKEN` or `GEMINI_API_KEY`.
+- In production, assistant replies are routed through `/api/chat`, which uses Hugging Face when `HF_TOKEN` is set.
+- Do not expose API keys with a `VITE_` prefix. Keep the chat secret on the server as `HF_TOKEN`.
 - Authentication can use MongoDB through `/api/auth` when `VITE_MONGO_AUTH_ENABLED=true`.
 - Chat state is stored in `localStorage`, so chats persist after refresh.
 - The project uses React functional components and hooks.
@@ -56,7 +56,7 @@ npm run dev
 3. Open the local URL shown in the terminal, usually `http://127.0.0.1:5173/`
 4. The dev command starts both the Vite UI and the local API server, so `/api/chat` and `/api/auth` work in development too.
 
-5. Add your Hugging Face token as `HF_TOKEN` in your deployment environment. Optionally set `HF_MODEL` to choose the chat model. If you still want Gemini as a fallback, set `GEMINI_API_KEY` too. For local testing, set the same values in your shell or a local env file.
+5. Add your Hugging Face token as `HF_TOKEN` in your deployment environment. Optionally set `HF_MODEL` to choose the chat model. For local testing, set the same value in your shell or a local env file.
 6. To enable MongoDB auth in production, set:
 
 ```bash
@@ -73,7 +73,7 @@ MONGODB_USERS_COLLECTION=users
 - `src/App.jsx` - main chat logic and UI
 - `src/App.css` - styling
 - `src/main.jsx` - app bootstrap
-- `api/chat.js` - Hugging Face / Gemini chat proxy
+- `api/chat.js` - Hugging Face chat proxy
 - `api/auth.js` - MongoDB-backed authentication endpoint
 
 ## Submission Summary

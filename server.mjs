@@ -41,13 +41,6 @@ if (!process.env.HF_TOKEN && typeof process.env.GEMINI_API_KEY === "string" && p
 const chatHandler = (await import("./api/chat.js")).default;
 const authHandler = (await import("./api/auth.js")).default;
 
-// Render currently provides the Gemini key as VITE_GEMINI_API_KEY in the dashboard.
-// Keep the backend tolerant of either name so production keeps working even if the
-// environment variable is configured with the frontend prefix.
-if (!process.env.GEMINI_API_KEY && process.env.VITE_GEMINI_API_KEY) {
-  process.env.GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY;
-}
-
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
