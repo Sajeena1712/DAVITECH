@@ -223,30 +223,26 @@ function getPasswordChecks(password) {
 }
 
 async function requestAssistantReply({ prompt, engine, history }) {
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt, engine, history }),
-    });
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ prompt, engine, history }),
+  });
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data?.error || `Request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    const reply = typeof data.reply === "string" ? data.reply.trim() : "";
-    if (reply) {
-      return reply;
-    }
-  } catch {
-    // Fall back to the local simulator when the API is unavailable.
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data?.error || `Request failed with status ${response.status}`);
   }
 
-  return buildAssistantReply(prompt, engine);
+  const data = await response.json();
+  const reply = typeof data.reply === "string" ? data.reply.trim() : "";
+  if (!reply) {
+    throw new Error("API returned an empty response.");
+  }
+
+  return reply;
 }
 
 async function requestMongoAuth(payload) {
@@ -617,7 +613,7 @@ function App() {
     setIsLoading(true);
 
     try {
-      // Ask Gemini through the backend in production, and through the browser key only on localhost.
+      // Ask the server for a real model response.
       const reply = await requestAssistantReply({
         prompt: text,
         engine: selectedChat.engine,
@@ -636,7 +632,7 @@ function App() {
       }));
     } catch (error) {
       const failureReply =
-        error instanceof Error ? error.message : "Gemini API is unavailable right now.";
+        error instanceof Error ? `API error: ${error.message}` : "API error: Gemini/HF request failed.";
       const replyTime = now();
       updateChat(selectedChat.id, (chat) => ({
         ...chat,
