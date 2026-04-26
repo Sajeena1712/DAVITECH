@@ -53,10 +53,11 @@ npm install
 npm run dev
 ```
 
-3. Open the local URL shown in the terminal, usually `http://localhost:5173/`
+3. Open the local URL shown in the terminal, usually `http://127.0.0.1:5173/`
+4. The dev command starts both the Vite UI and the local API server, so `/api/chat` and `/api/auth` work in development too.
 
-4. Add your Hugging Face token as `HF_TOKEN` in your deployment environment. Optionally set `HF_MODEL` to choose the chat model. If you still want Gemini as a fallback, set `GEMINI_API_KEY` too. For local testing, set the same values in your shell or a local env file.
-5. To enable MongoDB auth in production, set:
+5. Add your Hugging Face token as `HF_TOKEN` in your deployment environment. Optionally set `HF_MODEL` to choose the chat model. If you still want Gemini as a fallback, set `GEMINI_API_KEY` too. For local testing, set the same values in your shell or a local env file.
+6. To enable MongoDB auth in production, set:
 
 ```bash
 VITE_MONGO_AUTH_ENABLED=true
