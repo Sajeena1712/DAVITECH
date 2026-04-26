@@ -139,8 +139,8 @@ body {
   padding: 54px 44px;
   color: #fff;
   background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.26), transparent 30%),
-    linear-gradient(160deg, #ff8a2a 0%, #ff761f 55%, #ffb56f 100%);
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.22), transparent 30%),
+    linear-gradient(160deg, #10c145 0%, #0c9f39 56%, #74e19b 100%);
 }
 
 .auth-hero::after {
@@ -227,6 +227,48 @@ body {
 .auth-brand p {
   margin: 6px 0 0;
   color: var(--muted);
+}
+
+.password-checks {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(17, 179, 71, 0.16);
+  background: rgba(17, 179, 71, 0.05);
+}
+
+.password-checks-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0b7d34;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.password-checks-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.password-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.password-check.ok {
+  border-color: rgba(17, 179, 71, 0.28);
+  background: rgba(17, 179, 71, 0.1);
+  color: #0b7d34;
 }
 
 .auth-form {
@@ -1206,7 +1248,7 @@ button {
 :root[data-theme="dark"] .auth-hero {
   background:
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 30%),
-    linear-gradient(160deg, #dd6e15 0%, #c65c0b 55%, #f39a4b 100%);
+    linear-gradient(160deg, #0c9f39 0%, #08762b 56%, #4fcf7f 100%);
 }
 
 :root[data-theme="dark"] .password-toggle {
@@ -1218,6 +1260,23 @@ button {
 :root[data-theme="dark"] .auth-brand p,
 :root[data-theme="dark"] .auth-note {
   color: var(--muted);
+}
+
+:root[data-theme="dark"] .password-checks {
+  background: rgba(17, 179, 71, 0.08);
+  border-color: rgba(17, 179, 71, 0.18);
+}
+
+:root[data-theme="dark"] .password-check {
+  background: rgba(24, 33, 49, 0.98);
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .password-check.ok {
+  background: rgba(17, 179, 71, 0.14);
+  border-color: rgba(17, 179, 71, 0.22);
+  color: #8be1a9;
 }
 
 :root[data-theme="dark"] .auth-tab,

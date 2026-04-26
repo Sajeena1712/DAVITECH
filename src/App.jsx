@@ -212,6 +212,16 @@ function isStrongPassword(password) {
   );
 }
 
+function getPasswordChecks(password) {
+  return [
+    { label: "8+ characters", ok: typeof password === "string" && password.length >= 8 },
+    { label: "One lowercase", ok: /[a-z]/.test(password || "") },
+    { label: "One uppercase", ok: /[A-Z]/.test(password || "") },
+    { label: "One number", ok: /\d/.test(password || "") },
+    { label: "One symbol", ok: /[^A-Za-z0-9]/.test(password || "") },
+  ];
+}
+
 async function requestAssistantReply({ prompt, engine, history }) {
   const browserApiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const isLocalHost =
@@ -335,7 +345,7 @@ function App() {
     const savedUser = getSavedUsers().find((user) => user.email === session.email);
     return savedUser ? { name: savedUser.name, email: savedUser.email } : session;
   });
-  const [authMode, setAuthMode] = useState("signin");
+  const [authMode, setAuthMode] = useState("signup");
   const [authName, setAuthName] = useState("");
   const [authEmail, setAuthEmail] = useState(() => getSavedSession()?.email ?? "");
   const [authPassword, setAuthPassword] = useState("");
@@ -491,7 +501,12 @@ function App() {
               { name, email, password },
               ...current.filter((user) => user.email !== email),
             ]);
-            completeAuthSession(data.user, "Account created. You are signed in now.");
+            setAuthMode("signin");
+            setAuthName("");
+            setAuthPassword("");
+            setShowPassword(false);
+            setAuthError("");
+            setAuthNotice("Account created. Please sign in with your email and password.");
             return;
           }
         } catch (error) {
@@ -507,7 +522,12 @@ function App() {
 
       const nextUser = { name, email, password };
       setUsers((current) => [nextUser, ...current.filter((user) => user.email !== email)]);
-      completeAuthSession({ name, email }, "Account created. You are signed in now.");
+      setAuthMode("signin");
+      setAuthName("");
+      setAuthPassword("");
+      setShowPassword(false);
+      setAuthError("");
+      setAuthNotice("Account created. Please sign in with your email and password.");
       return;
     }
 
@@ -813,15 +833,15 @@ function App() {
           <div className="auth-screen">
             <div className="auth-layout">
               <aside className="auth-hero">
-                <div className="auth-hero-badge">DaivAI</div>
-                <h2>Secure access for every chat session</h2>
+                <div className="auth-hero-badge">Create account</div>
+                <h2>Start with a secure account, then sign in.</h2>
                 <p>
-                  DaivAI keeps the login flow simple, protected, and easy to trust. Your account is tied to your email, your password is validated for strength, and your workspace stays personal.
+                  Create your account first, store it safely in MongoDB, and use the same email and password to log in whenever you return.
                 </p>
                 <div className="auth-hero-footer">
                   <span>MongoDB stored</span>
-                  <span>Strong password</span>
-                  <span>Private workspace</span>
+                  <span>Signup first</span>
+                  <span>Strong password check</span>
                 </div>
               </aside>
 
@@ -883,6 +903,20 @@ function App() {
                       </button>
                     </div>
                   </label>
+
+                  {authMode !== "signin" && (
+                    <div className="password-checks">
+                      <div className="password-checks-title">Strong password check</div>
+                      <div className="password-checks-list">
+                        {getPasswordChecks(authPassword).map((item) => (
+                          <span key={item.label} className={`password-check ${item.ok ? "ok" : ""}`}>
+                            <span aria-hidden="true">{item.ok ? "✓" : "•"}</span>
+                            <span>{item.label}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {authMode !== "forgot" && (
                     <label className="auth-remember">
