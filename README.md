@@ -68,6 +68,19 @@ MONGODB_DATABASE=daivai
 MONGODB_USERS_COLLECTION=users
 ```
 
+## GitHub Pages Deploy
+
+To publish the built app to GitHub Pages:
+
+```bash
+npm run deploy
+```
+
+The deploy script builds the app and publishes `dist` to the `gh-pages` branch. In GitHub Pages settings, use:
+
+- Branch: `gh-pages`
+- Folder: `/ (root)`
+
 ## Files
 
 - `src/App.jsx` - main chat logic and UI
