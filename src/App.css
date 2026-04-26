@@ -276,6 +276,35 @@ body {
   gap: 14px;
 }
 
+.auth-back-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.auth-back-button,
+.auth-switch-link {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.auth-switch-link {
+  color: #0b7d34;
+  border-color: rgba(17, 179, 71, 0.18);
+  background: rgba(17, 179, 71, 0.06);
+}
+
+.auth-back-button:hover,
+.auth-switch-link:hover {
+  transform: translateY(-1px);
+}
+
 .auth-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1286,6 +1315,18 @@ button {
   color: var(--text);
 }
 
+:root[data-theme="dark"] .auth-back-button {
+  background: rgba(24, 33, 49, 0.98);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .auth-switch-link {
+  background: rgba(17, 179, 71, 0.1);
+  border-color: rgba(17, 179, 71, 0.18);
+  color: #8be1a9;
+}
+
 :root[data-theme="dark"] .auth-tab.active {
   background: linear-gradient(180deg, #11bf40, #0ca93a);
   border-color: transparent;
@@ -1374,6 +1415,11 @@ button {
   .auth-card {
     min-height: auto;
     padding: 24px 20px;
+  }
+
+  .auth-back-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .composer-shell {

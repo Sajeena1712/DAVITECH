@@ -859,6 +859,21 @@ function App() {
                   </div>
                 </div>
 
+                {authMode !== "signin" && (
+                  <div className="auth-back-row">
+                    <button type="button" className="auth-back-button" onClick={() => switchAuthMode("signin")}>
+                      ← Back to sign in
+                    </button>
+                    <button
+                      type="button"
+                      className="auth-switch-link"
+                      onClick={() => switchAuthMode(authMode === "signup" ? "forgot" : "signup")}
+                    >
+                      {authMode === "signup" ? "Forgot password?" : "Need an account?"}
+                    </button>
+                  </div>
+                )}
+
                 <form className="auth-form" onSubmit={handleAuthSubmit}>
                   {authMode === "signup" && (
                     <label className="auth-field">
@@ -942,14 +957,10 @@ function App() {
                           Forgot password?
                         </button>
                         <button type="button" onClick={() => switchAuthMode("signup")}>
-                          Need an account?
+                          Create account
                         </button>
                       </>
-                    ) : (
-                      <button type="button" onClick={() => switchAuthMode("signin")}>
-                        Back to sign in
-                      </button>
-                    )}
+                    ) : null}
                   </div>
                   <div className="auth-note">
                     {authMode === "signup"
