@@ -62,7 +62,7 @@ async function requestHuggingFaceReply({ prompt, engine, history }) {
     throw new Error("Missing HF_TOKEN");
   }
 
-  const model = process.env.HF_MODEL || "mistralai/Mistral-7B-Instruct-v0.3:fastest";
+  const model = process.env.HF_MODEL || "Qwen/Qwen2.5-7B-Instruct";
   const profile = ENGINE_PROFILES[engine] ?? ENGINE_PROFILES["Neural Nexus"];
   const messages = buildMessages(prompt, history, profile.system);
 
