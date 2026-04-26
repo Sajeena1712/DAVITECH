@@ -102,7 +102,7 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 28px;
   background:
     radial-gradient(circle at top left, rgba(17, 179, 71, 0.12), transparent 28%),
     radial-gradient(circle at bottom right, rgba(41, 72, 199, 0.12), transparent 32%),
@@ -110,50 +110,56 @@ body {
 }
 
 .auth-layout {
-  width: min(1080px, 100%);
+  width: min(1160px, 100%);
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+  gap: 0;
   align-items: stretch;
+  overflow: hidden;
+  border-radius: 36px;
+  border: 1px solid rgba(217, 222, 234, 0.9);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--shadow);
 }
 
 .auth-hero,
 .auth-card {
-  border: 1px solid rgba(217, 222, 234, 0.9);
-  border-radius: 28px;
-  box-shadow: var(--shadow);
-  padding: 34px 30px;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  min-height: 620px;
 }
 
 .auth-hero {
   position: relative;
   overflow: hidden;
   display: grid;
-  gap: 20px;
-  align-content: start;
-  color: var(--text);
+  gap: 18px;
+  align-content: center;
+  padding: 54px 44px;
+  color: #fff;
   background:
-    linear-gradient(160deg, rgba(17, 179, 71, 0.12), rgba(41, 72, 199, 0.08)),
-    rgba(255, 255, 255, 0.96);
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.26), transparent 30%),
+    linear-gradient(160deg, #ff8a2a 0%, #ff761f 55%, #ffb56f 100%);
 }
 
 .auth-hero::after {
   content: "";
   position: absolute;
-  inset: auto -18% -30% auto;
-  width: 220px;
-  height: 220px;
+  inset: auto -14% -28% auto;
+  width: 260px;
+  height: 260px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(17, 179, 71, 0.2), transparent 68%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 68%);
   pointer-events: none;
 }
 
 .auth-hero-badge {
   width: fit-content;
   border-radius: 999px;
-  border: 1px solid rgba(17, 179, 71, 0.22);
-  background: rgba(17, 179, 71, 0.08);
-  color: #0b7d34;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
   padding: 8px 12px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -163,31 +169,17 @@ body {
 
 .auth-hero h2 {
   margin: 0;
-  font-size: clamp(1.8rem, 2.3vw, 2.6rem);
-  line-height: 1.05;
+  max-width: 12ch;
+  font-size: clamp(2.2rem, 3vw, 3.7rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
 }
 
 .auth-hero p {
   margin: 0;
-  max-width: 52ch;
-  color: var(--muted);
+  max-width: 34ch;
+  color: rgba(255, 255, 255, 0.92);
   line-height: 1.7;
-}
-
-.auth-hero-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 12px;
-}
-
-.auth-hero-list li {
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.7);
-  font-weight: 600;
 }
 
 .auth-hero-footer {
@@ -197,32 +189,39 @@ body {
 }
 
 .auth-hero-footer span {
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.16);
   border-radius: 999px;
   padding: 8px 12px;
   font-size: 0.82rem;
   font-weight: 700;
+  color: #fff;
 }
 
 .auth-card {
   width: 100%;
-  background: rgba(255, 255, 255, 0.96);
+  padding: 54px 46px;
+  background: rgba(255, 255, 255, 0.98);
   display: grid;
-  gap: 24px;
+  gap: 22px;
+  align-content: center;
 }
 
 .auth-brand {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
+}
+
+.auth-brand > div {
+  width: 100%;
 }
 
 .auth-brand h1 {
   margin: 0;
-  font-size: 1.9rem;
-  color: #079a31;
+  font-size: clamp(1.8rem, 2.4vw, 2.5rem);
+  color: #111827;
 }
 
 .auth-brand p {
@@ -1206,13 +1205,8 @@ button {
 
 :root[data-theme="dark"] .auth-hero {
   background:
-    linear-gradient(160deg, rgba(17, 179, 71, 0.12), rgba(41, 72, 199, 0.08)),
-    rgba(19, 26, 41, 0.98);
-}
-
-:root[data-theme="dark"] .auth-hero-list li,
-:root[data-theme="dark"] .auth-hero-footer span {
-  background: rgba(24, 33, 49, 0.96);
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 30%),
+    linear-gradient(160deg, #dd6e15 0%, #c65c0b 55%, #f39a4b 100%);
 }
 
 :root[data-theme="dark"] .password-toggle {
@@ -1314,10 +1308,12 @@ button {
 @media (max-width: 720px) {
   .auth-layout {
     grid-template-columns: 1fr;
+    border-radius: 28px;
   }
 
   .auth-hero,
   .auth-card {
+    min-height: auto;
     padding: 24px 20px;
   }
 

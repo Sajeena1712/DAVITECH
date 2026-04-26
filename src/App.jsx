@@ -787,23 +787,6 @@ function App() {
     "Turn my idea into bullet points",
     "Explain this code simply",
   ];
-  const authHighlights = {
-    signin: [
-      "Private session handling",
-      "Strong password protection",
-      "Fast return to your chats",
-    ],
-    signup: [
-      "Create a secure account",
-      "Password strength is enforced",
-      "Your chats stay tied to your email",
-    ],
-    forgot: [
-      "Reset access safely",
-      "Choose a fresh strong password",
-      "Resume the same private workspace",
-    ],
-  };
 
   if (!authUser) {
     return (
@@ -830,27 +813,22 @@ function App() {
           <div className="auth-screen">
             <div className="auth-layout">
               <aside className="auth-hero">
-                <div className="auth-hero-badge">Privacy first</div>
+                <div className="auth-hero-badge">DaivAI</div>
                 <h2>Secure access for every chat session</h2>
                 <p>
                   DaivAI keeps the login flow simple, protected, and easy to trust. Your account is tied to your email, your password is validated for strength, and your workspace stays personal.
                 </p>
-                <ul className="auth-hero-list">
-                  {authHighlights[authMode].map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
                 <div className="auth-hero-footer">
-                  <span>Encrypted session</span>
+                  <span>MongoDB stored</span>
+                  <span>Strong password</span>
                   <span>Private workspace</span>
-                  <span>Safe password reset</span>
                 </div>
               </aside>
 
               <section className="auth-card">
                 <div className="auth-brand">
                   <div>
-                    <h1>DaivAI</h1>
+                    <h1>{authMode === "signup" ? "Create account" : authMode === "forgot" ? "Reset password" : "Welcome back"}</h1>
                     <p>
                       {authMode === "signup"
                         ? "Create your account to start chatting."
