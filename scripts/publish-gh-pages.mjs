@@ -24,13 +24,13 @@ async function removeExceptGit(dir) {
   }
 }
 
-async function prepareWorktree() {
+async function prepareWorktree(repoUrl) {
   await rm(worktreeDir, { recursive: true, force: true });
 
   try {
-    runGit(["clone", "--depth", "1", "--branch", "gh-pages", "--single-branch", "origin", worktreeDir]);
+    runGit(["clone", "--depth", "1", "--branch", "gh-pages", "--single-branch", repoUrl, worktreeDir]);
   } catch {
-    runGit(["clone", "origin", worktreeDir]);
+    runGit(["clone", repoUrl, worktreeDir]);
     runGit(["checkout", "--orphan", "gh-pages"], worktreeDir);
     runGit(["rm", "-rf", "."], worktreeDir);
   }
@@ -48,17 +48,17 @@ async function copyDist() {
 }
 
 async function main() {
-  const origin = execFileSync("git", ["remote", "get-url", "origin"], {
+  const repoUrl = execFileSync("git", ["remote", "get-url", "origin"], {
     cwd: repoRoot,
     encoding: "utf8",
   }).trim();
 
-  if (!origin) {
+  if (!repoUrl) {
     throw new Error("Missing git origin remote.");
   }
 
   await stat(distDir);
-  await prepareWorktree();
+  await prepareWorktree(repoUrl);
   await copyDist();
 
   runGit(["add", "-A"], worktreeDir);
@@ -76,6 +76,7 @@ async function main() {
   runGit(["commit", "-m", "Deploy GitHub Pages site"], worktreeDir);
   runGit(["push", "origin", "gh-pages"], worktreeDir);
   console.log("Published dist to gh-pages.");
+  await rm(worktreeDir, { recursive: true, force: true });
 }
 
 main().catch((error) => {
